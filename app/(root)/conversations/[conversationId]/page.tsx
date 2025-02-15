@@ -46,7 +46,6 @@ const ConversationPage = ({ params }: Props) => {
         name={(conversation.isGroup ? conversation.name : conversation.otherMember.username) || ""} 
         imageUrl={conversation.isGroup ? undefined : conversation.otherMember.imageUrl}
       />
-      <Body />
       <ChatInput />
     </ConversationConatiner>
   );
