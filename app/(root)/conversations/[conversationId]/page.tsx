@@ -24,6 +24,11 @@ const ConversationPage = ({ params }: Props) => {
     id: conversationId as Id<"conversations"> 
   });
 
+  const [removeFriendDialogOpen, setRemoveFriendDialogOpen] = React.useState(false);
+  const [deleteGroupDialogOpen, setDeleteGroupDialogOpen] = React.useState(false);
+  const [leaveGroupDialogOpen, setLeaveGroupDialogOpen] = React.useState(false);
+  const [callType, setCallType] = React.useState<"audio" | "video" | null>(null);
+
   if (conversation === undefined) {
     return (
       <div className='w-full h-full flex items-center justify-center'>
@@ -45,6 +50,24 @@ const ConversationPage = ({ params }: Props) => {
       <Header 
         name={(conversation.isGroup ? conversation.name : conversation.otherMember.username) || ""} 
         imageUrl={conversation.isGroup ? undefined : conversation.otherMember.imageUrl}
+        options={conversation.isGroup ? [
+          {
+            label: "Leave group",
+            destructive: false,
+            onClick: () => setLeaveGroupDialogOpen(true)
+          },
+          {
+            label: "Delete group",
+            destructive: true,
+            onClick: () => setDeleteGroupDialogOpen(true)
+          }
+        ] : [
+          {
+            label: "Remove friend",
+            destructive: true,
+            onClick: () => setRemoveFriendDialogOpen(true)
+          }
+        ]}
       />
       <Body members={conversation.members} />
       <ChatInput />

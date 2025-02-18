@@ -24,7 +24,7 @@ const geistMono = Geist_Mono({
 
 export const metadata: Metadata = {
   title: "lo-chat",
-  description: "real-time chat app",
+  description: "Real-time chat app made by Bidhan Dhakal",
 };
 
 export default function RootLayout({

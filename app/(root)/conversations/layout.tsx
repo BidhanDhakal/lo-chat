@@ -23,7 +23,10 @@ const ConversationsLayout = ({ children }: Props) => {
                 <DMConversationItem key={conversations.conversation._id} 
                 id={conversations.conversation._id} 
                 username={conversations.otherMember?.username || ""} 
-                imageUrl={conversations.otherMember?.imageUrl || ""}/>
+                imageUrl={conversations.otherMember?.imageUrl || ""}
+                lastMessageContent={conversations.lastMessage?.content }
+                lastMessageSender={conversations.lastMessage?.sender}
+                />
             }) : (<Loader2 />
             )}
             </ItemList>
