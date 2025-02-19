@@ -23,7 +23,7 @@ const geistMono = Geist_Mono({
 });
 
 export const metadata: Metadata = {
-  title: "lo-chat",
+  title: "Chatryx",
   description: "Real-time chat app made by Bidhan Dhakal",
 };
 

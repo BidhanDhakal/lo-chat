@@ -21,14 +21,25 @@ export const get = query({
         .withIndex("by_memberId", (q) => q.eq("memberId", currentUser._id)).collect();
 
 
-        const conversations = await Promise.all(conversationMemberships?.map(async (membership) => {
+        let conversations = await Promise.all(conversationMemberships?.map(async (membership) => {
             const conversation = await ctx.db.get(membership.conversationId);
-
+            // Also fetch the last message to get its timestamp
+            const lastMessage = conversation?.lastMessageId ? 
+                await ctx.db.get(conversation.lastMessageId) : null;
+            
             if (!conversation) {
                 throw new ConvexError("Conversation not found");
             }
-            return conversation;
+            return {
+                ...conversation,
+                lastMessageTimestamp: lastMessage?._creationTime ?? 0
+            };
         }));
+
+        // Sort conversations by the actual message timestamp
+        conversations.sort((a, b) => {
+            return b.lastMessageTimestamp - a.lastMessageTimestamp;
+        });
 
         const conversationsWithDetails = await Promise.all(conversations.map(async (conversation) => {
         const allconversationMemberships = await ctx.db.query("conversationMembers")
