@@ -5,21 +5,9 @@ import { Textarea } from '@/components/ui/textarea';
 import { api } from '@/convex/_generated/api';
 import { Id } from '@/convex/_generated/dataModel';
 import { useMutation } from 'convex/react';
-import { Smile, Image, Loader2, Send } from 'lucide-react';
-import React, { useRef, useEffect, useState } from 'react';
+import { Image, Loader2, Send } from 'lucide-react';
+import React, { useRef, useEffect } from 'react';
 import { toast } from 'sonner';
-import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
-
-// Common emojis that don't require external packages
-const commonEmojis = [
-  "😀", "😃", "😄", "😁", "😆", "😅", "😂", "🤣", "😊", "😇", 
-  "🙂", "🙃", "😉", "😌", "😍", "🥰", "😘", "😗", "😙", "😚", 
-  "😋", "😛", "😝", "😜", "🤪", "🤨", "🧐", "🤓", "😎", "🤩",
-  "👍", "👎", "👏", "🙌", "👐", "🤲", "🤝", "🙏", "✌️", "🤞",
-  "❤️", "🧡", "💛", "💚", "💙", "💜", "🖤", "❣️", "💕", "💞",
-  "😢", "😭", "😤", "😠", "😡", "🤬", "🤯", "😳", "🥵", "🥶",
-  "😱", "😨", "😰", "😥", "😓", "🤗", "🤔", "🤭", "🤫", "🤥"
-];
 
 const ChatInput = () => {
   const conversationId = window.location.pathname.split('/').pop() as Id<"conversations">;
@@ -27,7 +15,6 @@ const ChatInput = () => {
   const [content, setContent] = React.useState("");
   const [isSubmitting, setIsSubmitting] = React.useState(false);
   const [isUploadingImage, setIsUploadingImage] = React.useState(false);
-  const [isEmojiPickerOpen, setIsEmojiPickerOpen] = React.useState(false);
   
   const textareaRef = React.useRef<HTMLTextAreaElement>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
@@ -147,12 +134,6 @@ const ChatInput = () => {
     }
   };
 
-  const handleEmojiSelect = (emoji: string) => {
-    setContent(prev => prev + emoji);
-    setIsEmojiPickerOpen(false);
-    textareaRef.current?.focus();
-  };
-
   return (
     <div className="p-3 border-t">
       <div className="flex items-center gap-x-2">
@@ -187,35 +168,10 @@ const ChatInput = () => {
             onKeyDown={onKeyDown}
             placeholder="Type a message"
             rows={1}
-            className="resize-none min-h-[40px] max-h-[150px] py-2 px-3 pr-20 overflow-y-auto"
+            className="resize-none min-h-[40px] max-h-[150px] py-2 px-3 pr-12 overflow-y-auto"
             disabled={isSubmitting || isUploadingImage}
           />
-          <div className="absolute right-2 top-1/2 transform -translate-y-1/2 flex items-center gap-1">
-            <Popover open={isEmojiPickerOpen} onOpenChange={setIsEmojiPickerOpen}>
-              <PopoverTrigger asChild>
-                <Button
-                  size="icon"
-                  variant="ghost"
-                  className="text-muted-foreground hover:text-foreground h-10 w-10"
-                  disabled={isSubmitting || isUploadingImage}
-                >
-                  <Smile className="h-6 w-6" />
-                </Button>
-              </PopoverTrigger>
-              <PopoverContent side="top" align="end" className="w-auto p-2 border">
-                <div className="grid grid-cols-8 gap-1 max-h-[300px] overflow-y-auto">
-                  {commonEmojis.map((emoji, index) => (
-                    <button
-                      key={index}
-                      className="text-2xl hover:bg-muted p-1 rounded cursor-pointer"
-                      onClick={() => handleEmojiSelect(emoji)}
-                    >
-                      {emoji}
-                    </button>
-                  ))}
-                </div>
-              </PopoverContent>
-            </Popover>
+          <div className="absolute right-2 top-1/2 transform -translate-y-1/2">
             <Button
               size="icon"
               onClick={onSubmit}
