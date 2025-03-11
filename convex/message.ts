@@ -6,7 +6,7 @@ export const create = mutation({
     args: {
         conversationId: v.id("conversations"),
         type: v.string(),
-        content: v.array(v.string()),
+        content: v.string(),
     },
     handler: async (ctx, args) => {
         const identity = await ctx.auth.getUserIdentity();
@@ -29,7 +29,10 @@ export const create = mutation({
         }
         const message = await ctx.db.insert("messages", {
             senderId: currentUser._id,
-            ...args
+            isDeleted: false,
+            conversationId: args.conversationId,
+            type: args.type,
+            content: args.content
         });
         await ctx.db.patch(args.conversationId, {lastMessageId: message});
 

@@ -18,10 +18,10 @@ export const get = query({
             throw new ConvexError("User not found");
         }
 
-        const conversation: any = await ctx.db.get(args.id);
+        const conversation = await ctx.db.get(args.id);
 
-        if(!conversation) {
-            throw new ConvexError("Conversation not found");
+        if (!conversation) {
+            return null;
         }
 
         const membership = await ctx.db.query("conversationMembers")
@@ -29,7 +29,7 @@ export const get = query({
             .eq("conversationId", conversation._id)).unique();
 
         if(!membership) {
-            throw new ConvexError("you aren't a member of this conversation");
+            return null;
         }
 
         const allConversationMemberships = await ctx.db 

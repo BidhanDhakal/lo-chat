@@ -9,6 +9,8 @@ import React from 'react'
 import Header from './_components/Header';
 import Body from './_components/body/Body';
 import ChatInput from './_components/input/ChatInput';
+import RemoveFriendDialog from './_components/dialogs/RemoveFriendDialog';
+import { useRouter } from 'next/navigation';
 
 type Props = {
   params: Promise<{
@@ -19,6 +21,7 @@ type Props = {
 const ConversationPage = ({ params }: Props) => {
   // Unwrap params using React.use()
   const { conversationId } = React.use(params);
+  const router = useRouter();
   
   const conversation = useQuery(api.conversation.get, { 
     id: conversationId as Id<"conversations"> 
@@ -45,11 +48,50 @@ const ConversationPage = ({ params }: Props) => {
     );
   }
 
+  // Type guard to check if conversation has otherMember property
+  const hasOtherMember = (conv: any): conv is { 
+    isGroup: boolean; 
+    otherMember: { username?: string; imageUrl?: string }
+  } => {
+    return !conv.isGroup && 'otherMember' in conv;
+  };
+
+  // Get name and imageUrl safely
+  const getName = () => {
+    if (conversation.isGroup) {
+      return conversation.name || "";
+    } else if (hasOtherMember(conversation)) {
+      return conversation.otherMember.username || "";
+    }
+    return "";
+  };
+
+  const getImageUrl = () => {
+    if (conversation.isGroup) {
+      return undefined;
+    } else if (hasOtherMember(conversation)) {
+      return conversation.otherMember.imageUrl;
+    }
+    return undefined;
+  };
+
+  // Handle successful friend removal
+  const handleRemoveFriendSuccess = () => {
+    // Navigate away from this conversation to avoid the "Conversation not found" error
+    router.push('/conversations');
+  };
+
   return (
     <ConversationConatiner>
+      <RemoveFriendDialog 
+        conversationId={conversationId} 
+        open={removeFriendDialogOpen} 
+        setOpen={setRemoveFriendDialogOpen}
+        onSuccess={handleRemoveFriendSuccess}
+      />
       <Header 
-        name={(conversation.isGroup ? conversation.name : conversation.otherMember.username) || ""} 
-        imageUrl={conversation.isGroup ? undefined : conversation.otherMember.imageUrl}
+        name={getName()}
+        imageUrl={getImageUrl()}
         options={conversation.isGroup ? [
           {
             label: "Leave group",
@@ -69,7 +111,8 @@ const ConversationPage = ({ params }: Props) => {
           }
         ]}
       />
-      <Body members={conversation.members} />
+      {/* Pass an empty array if members doesn't exist */}
+      <Body members={[]} />
       <ChatInput />
     </ConversationConatiner>
   );

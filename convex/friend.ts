@@ -1,10 +1,11 @@
 import { ConvexError, v } from "convex/values";
-import { mutation } from "./_generated/server";
+import { mutation, query } from "./_generated/server";
 import { getUserByClerkId } from "./_utils";
+import { Id } from "./_generated/dataModel";
 
 export const remove = mutation({
     args: {
-        conversationId: v.id("conversations"),
+        conversationId: v.id("conversations")
     },
     handler: async (ctx, args) => {
         const identity = await ctx.auth.getUserIdentity();
@@ -12,11 +13,14 @@ export const remove = mutation({
         if (!identity) {
             throw new Error("Unauthorized");
         }
+
         const currentUser = await getUserByClerkId(ctx, identity.subject);
 
         if (!currentUser) {
             throw new ConvexError("User not found");
         }
+
+        console.log(`Removing friend. Current user: ${currentUser._id}`);
 
         const conversation = await ctx.db.get(args.conversationId);
 
@@ -24,39 +28,89 @@ export const remove = mutation({
             throw new ConvexError("Conversation not found");
         }
 
-
-        const membership = await ctx.db.query("conversationMembers")
-        .withIndex("by_memberId_conversationId", q => q.eq("memberId", currentUser._id))
-        .collect();
-
-
-        if(!membership || membership.length === 2) {
-            throw new ConvexError("you aren't a member of this conversation");
+        if (conversation.isGroup) {
+            throw new ConvexError("Cannot remove friend from group conversation");
         }
 
-        const friendship = await ctx.db.query("friends")
-        .withIndex("by_conversationId", (q) => { return q.eq("conversationId", args.conversationId)})
-        .unique();
+        // Get all conversation memberships
+        const conversationMemberships = await ctx.db
+            .query("conversationMembers")
+            .withIndex("by_conversationId", (q) => q.eq("conversationId", args.conversationId))
+            .collect();
 
-        if(!friendship){
-            throw new ConvexError("Friendship not found");
+        console.log(`Found ${conversationMemberships.length} members in conversation ${args.conversationId}`);
+
+        // Find the other member in the conversation
+        const otherMembership = conversationMemberships.find(
+            (membership) => membership.memberId !== currentUser._id
+        );
+
+        if (!otherMembership) {
+            throw new ConvexError("Other member not found in conversation");
         }
 
-        const messages = await ctx.db.query("messages")
-        .withIndex("by_conversationId", (q) => q.eq("conversationId", args.conversationId))
-        .collect();
+        const otherUser = await ctx.db.get(otherMembership.memberId);
+
+        if (!otherUser) {
+            throw new ConvexError("Other user not found");
+        }
+
+        console.log(`Removing friendship between ${currentUser._id} and ${otherUser._id}`);
+
+        // Delete only the specific friendship between these two users
+        const friendship = await ctx.db
+            .query("friendships")
+            .withIndex("by_userIds", (q) => 
+                q.eq("userId1", currentUser._id).eq("userId2", otherUser._id)
+            )
+            .first();
+
+        const reverseFriendship = await ctx.db
+            .query("friendships")
+            .withIndex("by_userIds", (q) => 
+                q.eq("userId1", otherUser._id).eq("userId2", currentUser._id)
+            )
+            .first();
+
+        console.log(`Found friendship records: ${friendship ? 'Yes' : 'No'}, reverse: ${reverseFriendship ? 'Yes' : 'No'}`);
+
+        // Delete both friendship records for this specific friendship
+        if (friendship) {
+            await ctx.db.delete(friendship._id);
+            console.log(`Deleted friendship ${friendship._id}`);
+        }
+
+        if (reverseFriendship) {
+            await ctx.db.delete(reverseFriendship._id);
+            console.log(`Deleted reverse friendship ${reverseFriendship._id}`);
+        }
+
+        // Delete only this specific conversation and its memberships
+        for (const membership of conversationMemberships) {
+            await ctx.db.delete(membership._id);
+            console.log(`Deleted conversation membership ${membership._id}`);
+        }
 
         await ctx.db.delete(args.conversationId);
+        console.log(`Deleted conversation ${args.conversationId}`);
 
-        await ctx.db.delete(friendship._id);
+        // Check remaining friendships for this user
+        const remainingFriendships = await ctx.db
+            .query("friendships")
+            .withIndex("by_status_userId1", (q) => 
+                q.eq("status", "accepted").eq("userId1", currentUser._id)
+            )
+            .collect();
 
-        await Promise.all(membership.map(async (membership) => {
-            await ctx.db.delete(membership._id);
-        }));
+        const remainingReverseFriendships = await ctx.db
+            .query("friendships")
+            .withIndex("by_status_userId2", (q) => 
+                q.eq("status", "accepted").eq("userId2", currentUser._id)
+            )
+            .collect();
 
-        await Promise.all(messages.map(async (message) => {
-            await ctx.db.delete(message._id);
-        }));
+        console.log(`Remaining friendships for user ${currentUser._id}: ${remainingFriendships.length + remainingReverseFriendships.length}`);
 
-        }
-    });
+        return { success: true };
+    }
+});

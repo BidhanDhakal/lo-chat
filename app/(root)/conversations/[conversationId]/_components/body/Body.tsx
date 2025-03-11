@@ -33,7 +33,7 @@ const Body = ({ members }: Props) => {
             senderImage={senderImage}
             senderName={senderName}
             lastByUser={lastByUser}
-            content={message.content[0]}
+            content={message.content}
             createdAt={message._creationTime}
             type={message.type}
           />

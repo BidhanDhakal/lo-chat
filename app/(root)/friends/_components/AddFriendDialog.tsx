@@ -1,91 +1,88 @@
 "use client";
 
-import React from 'react'
-import { z } from "zod";
-import { zodResolver } from "@hookform/resolvers/zod";
-import { useForm } from 'react-hook-form';
-import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
-import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip';
 import { Button } from '@/components/ui/button';
-import { UserPlus } from 'lucide-react';
-import { Form, FormField, FormItem, FormLabel, FormControl, FormMessage } from '@/components/ui/form';
+import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
 import { Input } from '@/components/ui/input';
-import { useMutationState } from '@/hooks/useMutationState';
 import { api } from '@/convex/_generated/api';
-import { toast } from "sonner";
-import { ConvexError } from "convex/values";
+import { useMutation } from 'convex/react';
+import { Loader2, UserPlus } from 'lucide-react';
+import React from 'react';
+import { toast } from 'sonner';
+import { ConvexError } from 'convex/values';
 
+interface AddFriendDialogProps {
+  children?: React.ReactNode;
+}
 
-const addFriendFormSchema = z.object({
-    email: z.string().min(1, { message: "This field cant be empty" })
-        .email("Please enter a valid email"),
-});
+const AddFriendDialog = ({ children }: AddFriendDialogProps) => {
+  const [open, setOpen] = React.useState(false);
+  const [email, setEmail] = React.useState("");
+  const [isSubmitting, setIsSubmitting] = React.useState(false);
+  
+  const createRequest = useMutation(api.request.create);
 
-const AddFriendDialog = () => {
-    const { mutate: createRequest, pending } = useMutationState(api.request.create);
+  const onSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
+    e.preventDefault();
+    
+    if (!email) return;
+    
+    try {
+      setIsSubmitting(true);
+      await createRequest({ email });
+      setEmail("");
+      toast.success("Friend request sent successfully");
+      setOpen(false);
+    } catch (error) {
+      toast.error(error instanceof ConvexError ? error.data : "Unexpected error occurred");
+    } finally {
+      setIsSubmitting(false);
+    }
+  };
 
-    const form = useForm<z.infer<typeof addFriendFormSchema>>({
-        resolver: zodResolver(addFriendFormSchema),
-        defaultValues: {
-            email: "",
-        },
-    });
-
-    const handleSubmit = async (values: z.infer<typeof addFriendFormSchema>) => {
-        try {
-            await createRequest({ email: values.email });
-            toast.success("Friend request sent successfully!");
-            form.reset();
-        } catch (error: unknown) {
-            toast.error(error instanceof ConvexError ? error.data : "Unexpected error occurred");
-        }
-    };
-    return <Dialog>
-        <Tooltip>
-            <TooltipTrigger asChild>
-                <DialogTrigger asChild>
-                    <Button size="icon" variant="outline">
-                        <UserPlus />
-                    </Button>
-                </DialogTrigger>            
-                </TooltipTrigger>
-            <TooltipContent>
-                <p>Add Friend</p>
-            </TooltipContent>
-        </Tooltip>
-
-        <DialogContent>
-            <DialogHeader>
-                <DialogTitle>
-                    Add Friend
-                </DialogTitle>
-                <DialogDescription>
-                    Add a friend by entering their email address
-                </DialogDescription>
-            </DialogHeader>
-            <Form {...form}>
-                <form onSubmit={form.handleSubmit(handleSubmit)} className="space-y-8">
-                    <FormField
-                        control={form.control}
-                        name="email"
-                        render={({ field }) => (
-                            <FormItem>
-                                <FormLabel>Email</FormLabel>
-                                <FormControl>
-                                    <Input placeholder="Email..."
-                                        {...field} />
-                                </FormControl>
-                                <FormMessage />
-                            </FormItem>
-                        )}
-                    />
-                    <DialogFooter>
-                        <Button disabled={pending} type="submit">Send Request</Button>
-                    </DialogFooter>
-                </form>
-            </Form>
-        </DialogContent>
+  return (
+    <Dialog open={open} onOpenChange={setOpen}>
+      <DialogTrigger asChild>
+        {children || (
+          <Button size="icon" variant="ghost">
+            <UserPlus className="h-5 w-5" />
+          </Button>
+        )}
+      </DialogTrigger>
+      <DialogContent>
+        <DialogHeader>
+          <DialogTitle>Add a friend</DialogTitle>
+          <DialogDescription>
+            Send a friend request to start chatting
+          </DialogDescription>
+        </DialogHeader>
+        <form onSubmit={onSubmit}>
+          <div className="py-4">
+            <Input
+              placeholder="Email"
+              value={email}
+              onChange={(e) => setEmail(e.target.value)}
+              disabled={isSubmitting}
+            />
+          </div>
+          <DialogFooter>
+            <Button
+              type="submit"
+              disabled={isSubmitting}
+            >
+              {isSubmitting ? (
+                <>
+                  <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                  Sending...
+                </>
+              ) : (
+                "Send Request"
+              )}
+            </Button>
+          </DialogFooter>
+        </form>
+      </DialogContent>
     </Dialog>
+  );
 };
 
-export default AddFriendDialog
+export default AddFriendDialog;
