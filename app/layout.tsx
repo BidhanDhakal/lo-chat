@@ -24,7 +24,7 @@ const geistMono = Geist_Mono({
 
 export const metadata: Metadata = {
   title: "Chatryx",
-  description: "Real-time chat app made by Bidhan Dhakal",
+  description: "Real-time chat app made by Bidhan Dhakal. Note: Still in development!",
 };
 
 export default function RootLayout({
