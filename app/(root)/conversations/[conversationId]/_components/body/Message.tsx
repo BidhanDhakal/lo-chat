@@ -57,6 +57,8 @@ const Message = ({
     e.stopPropagation();
     if (!imageUrl) return;
 
+    const url = imageUrl as string;
+
     try {
       // Fetch the image as a blob
       const response = await fetch(imageUrl);
