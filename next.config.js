@@ -1,10 +1,9 @@
-import type { NextConfig } from "next";
-
-const nextConfig = {
+// next.config.js
+module.exports = {
   eslint: {
     ignoreDuringBuilds: true,
   },
-   typescript: {
+  typescript: {
     ignoreBuildErrors: true,
   },
   async redirects() {
@@ -12,10 +11,8 @@ const nextConfig = {
       {
         source: "/",
         destination: "/conversations",
-        permanent: true
-      }
-    ]
-  }
+        permanent: true,
+      },
+    ];
+  },
 };
-
-export default nextConfig;
