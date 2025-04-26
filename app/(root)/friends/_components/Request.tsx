@@ -6,10 +6,17 @@ import { Card } from '@/components/ui/card';
 import { api } from '@/convex/_generated/api';
 import { Id } from '@/convex/_generated/dataModel'
 import { useMutation } from 'convex/react';
-import { Check, User, X } from 'lucide-react';
+import { Check, Loader2, User, X } from 'lucide-react';
 import React from 'react'
 import { toast } from 'sonner';
 import { ConvexError } from 'convex/values';
+import EmojiParser from '@/components/ui/emoji-parser';
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipProvider,
+  TooltipTrigger,
+} from "@/components/ui/tooltip";
 
 interface RequestProps {
   id: Id<"requests">;
@@ -21,7 +28,7 @@ interface RequestProps {
 const Request = ({ id, imageUrl, username, email }: RequestProps) => {
   const [isAccepting, setIsAccepting] = React.useState(false);
   const [isDenying, setIsDenying] = React.useState(false);
-  
+
   const accept = useMutation(api.request.accept);
   const deny = useMutation(api.request.deny);
 
@@ -60,27 +67,59 @@ const Request = ({ id, imageUrl, username, email }: RequestProps) => {
           </AvatarFallback>
         </Avatar>
         <div className="flex flex-col truncate">
-          <h4 className="truncate">{username}</h4>
+          <h4 className="truncate">
+            <EmojiParser text={username} />
+          </h4>
           <p className="text-xs text-muted-foreground truncate">{email}</p>
         </div>
       </div>
-      
+
       <div className="flex items-center gap-2">
-        <Button
-          size="icon"
-          disabled={isAccepting || isDenying}
-          onClick={onAccept}
-        >
-          <Check className="h-4 w-4 text-emerald-500" />
-        </Button>
-        <Button
-          size="icon"
-          variant="destructive"
-          disabled={isAccepting || isDenying}
-          onClick={onDeny}
-        >
-          <X className="h-4 w-4 text-rose-500" />
-        </Button>
+        <TooltipProvider>
+          <Tooltip>
+            <TooltipTrigger asChild>
+              <Button
+                size="sm"
+                className="bg-blue-600 hover:bg-blue-700 text-white"
+                disabled={isAccepting || isDenying}
+                onClick={onAccept}
+              >
+                {isAccepting ? (
+                  <Loader2 className="h-4 w-4 animate-spin" />
+                ) : (
+                  <Check className="h-4 w-4 mr-1" />
+                )}
+                {!isAccepting && "Accept"}
+              </Button>
+            </TooltipTrigger>
+            <TooltipContent>
+              <p>Accept friend request</p>
+            </TooltipContent>
+          </Tooltip>
+        </TooltipProvider>
+
+        <TooltipProvider>
+          <Tooltip>
+            <TooltipTrigger asChild>
+              <Button
+                size="sm"
+                variant="destructive"
+                disabled={isAccepting || isDenying}
+                onClick={onDeny}
+              >
+                {isDenying ? (
+                  <Loader2 className="h-4 w-4 animate-spin" />
+                ) : (
+                  <X className="h-4 w-4 mr-1" />
+                )}
+                {!isDenying && "Reject"}
+              </Button>
+            </TooltipTrigger>
+            <TooltipContent>
+              <p>Reject friend request</p>
+            </TooltipContent>
+          </Tooltip>
+        </TooltipProvider>
       </div>
     </Card>
   )

@@ -30,15 +30,15 @@ const FriendsPage = () => {
           </Button>
         </AddFriendDialog>
       </div>
-      
+
       {requests.length === 0 ? (
         <p className="text-muted-foreground">No friends yet. Add to start chatting.</p>
       ) : (
         <div className="space-y-2">
           {requests.map((request) => (
-            <Request 
+            <Request
               key={request._id}
-              id={request._id} 
+              id={request._id}
               imageUrl={request.sender?.imageUrl || ""}
               username={request.sender?.username || ""}
               email={request.sender?.email || ""}

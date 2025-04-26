@@ -12,19 +12,22 @@ const geistSans = Geist({
   subsets: ["latin"],
 });
 
-
-
-
-
-
 const geistMono = Geist_Mono({
   variable: "--font-geist-mono",
   subsets: ["latin"],
 });
 
 export const metadata: Metadata = {
-  title: "Chatryx",
+  title: "Chatrex",
   description: "Real-time chat app made by Bidhan Dhakal. Note: Still in development!",
+  icons: {
+    icon: [
+      {
+        url: "/lo-chat.svg",
+        sizes: "any",
+      },
+    ],
+  },
 };
 
 export default function RootLayout({
@@ -34,6 +37,9 @@ export default function RootLayout({
 }>) {
   return (
     <html lang="en" suppressHydrationWarning>
+      <head>
+        <link rel="icon" href="/favicon.ico" sizes="any" />
+      </head>
       <body
         className={cn(
           geistSans.variable,

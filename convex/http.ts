@@ -36,24 +36,24 @@ const handleClerkWebhook = httpAction(async (ctx, req) => {
             });
             if (user) {
                 console.log(`updating user ${event.data.id} with: ${event.data}`);
-            } 
-            case "user.updated":{
-                
-                console.log("Creating/Updating User:", event.data.id);
+            }
+        case "user.updated": {
 
-                await ctx.runMutation(internal.user.crate, {
-                    clerkId: event.data.id,
-                    email: event.data.email_addresses[0].email_address,
-                    imageUrl: event.data.image_url,
-                    username: `${event.data.first_name} ${event.data.last_name}`
-                });
-                break;
-            }
-            default:{
-                console.log("Unhandled event type:", event.type);
-            }
+            console.log("Creating/Updating User:", event.data.id);
+
+            await ctx.runMutation(internal.user.crate, {
+                clerkId: event.data.id,
+                email: event.data.email_addresses[0].email_address,
+                imageUrl: event.data.image_url,
+                username: `${event.data.first_name} ${event.data.last_name}`
+            });
+            break;
+        }
+        default: {
+            console.log("Unhandled event type:", event.type);
+        }
     }
- return new Response(null, { status: 200, });
+    return new Response(null, { status: 200, });
 });
 
 const http = httpRouter();

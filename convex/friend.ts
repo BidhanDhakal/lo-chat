@@ -60,14 +60,14 @@ export const remove = mutation({
         // Delete only the specific friendship between these two users
         const friendship = await ctx.db
             .query("friendships")
-            .withIndex("by_userIds", (q) => 
+            .withIndex("by_userIds", (q) =>
                 q.eq("userId1", currentUser._id).eq("userId2", otherUser._id)
             )
             .first();
 
         const reverseFriendship = await ctx.db
             .query("friendships")
-            .withIndex("by_userIds", (q) => 
+            .withIndex("by_userIds", (q) =>
                 q.eq("userId1", otherUser._id).eq("userId2", currentUser._id)
             )
             .first();
@@ -97,14 +97,14 @@ export const remove = mutation({
         // Check remaining friendships for this user
         const remainingFriendships = await ctx.db
             .query("friendships")
-            .withIndex("by_status_userId1", (q) => 
+            .withIndex("by_status_userId1", (q) =>
                 q.eq("status", "accepted").eq("userId1", currentUser._id)
             )
             .collect();
 
         const remainingReverseFriendships = await ctx.db
             .query("friendships")
-            .withIndex("by_status_userId2", (q) => 
+            .withIndex("by_status_userId2", (q) =>
                 q.eq("status", "accepted").eq("userId2", currentUser._id)
             )
             .collect();
@@ -112,5 +112,51 @@ export const remove = mutation({
         console.log(`Remaining friendships for user ${currentUser._id}: ${remainingFriendships.length + remainingReverseFriendships.length}`);
 
         return { success: true };
+    }
+});
+
+export const getFriends = query({
+    args: {},
+    handler: async (ctx) => {
+        const identity = await ctx.auth.getUserIdentity();
+        if (!identity) {
+            throw new ConvexError("Unauthorized");
+        }
+
+        const currentUser = await getUserByClerkId(ctx, identity.subject);
+        if (!currentUser) {
+            throw new ConvexError("User not found");
+        }
+
+        // Get all friendships where the current user is userId1
+        const friendships1 = await ctx.db
+            .query("friendships")
+            .withIndex("by_status_userId1", (q) =>
+                q.eq("status", "accepted").eq("userId1", currentUser._id)
+            )
+            .collect();
+
+        // Get all friendships where the current user is userId2
+        const friendships2 = await ctx.db
+            .query("friendships")
+            .withIndex("by_status_userId2", (q) =>
+                q.eq("status", "accepted").eq("userId2", currentUser._id)
+            )
+            .collect();
+
+        // Combine the results and get the friend details
+        const friendsPromises = [
+            ...friendships1.map(async (friendship) => {
+                return await ctx.db.get(friendship.userId2);
+            }),
+            ...friendships2.map(async (friendship) => {
+                return await ctx.db.get(friendship.userId1);
+            })
+        ];
+
+        const friends = await Promise.all(friendsPromises);
+
+        // Filter out null values and return
+        return friends.filter(friend => friend !== null);
     }
 });

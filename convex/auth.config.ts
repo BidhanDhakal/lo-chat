@@ -1,8 +1,8 @@
 export default {
-    providers: [
-      {
-        domain: "https://outgoing-mastiff-96.clerk.accounts.dev",
-        applicationID: "convex",
-      },
-    ]
-  };
+  providers: [
+    {
+      domain: "https://complete-quetzal-0.clerk.accounts.dev",
+      applicationID: "convex",
+    },
+  ]
+};

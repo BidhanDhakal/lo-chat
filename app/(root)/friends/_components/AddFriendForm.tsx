@@ -13,14 +13,14 @@ import { ConvexError } from 'convex/values';
 const AddFriendForm = () => {
   const [email, setEmail] = React.useState("");
   const [isSubmitting, setIsSubmitting] = React.useState(false);
-  
+
   const createRequest = useMutation(api.request.create);
 
   const onSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
-    
+
     if (!email) return;
-    
+
     try {
       setIsSubmitting(true);
       await createRequest({ email });

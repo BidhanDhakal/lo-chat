@@ -10,6 +10,8 @@ import Header from './_components/Header';
 import Body from './_components/body/Body';
 import ChatInput from './_components/input/ChatInput';
 import RemoveFriendDialog from './_components/dialogs/RemoveFriendDialog';
+import DeleteGroupDialog from './_components/dialogs/DeleteGroupDialog';
+import LeaveGroupDialog from './_components/dialogs/LeaveGroupDialog';
 import { useRouter } from 'next/navigation';
 
 type Props = {
@@ -22,9 +24,13 @@ const ConversationPage = ({ params }: Props) => {
   // Unwrap params using React.use()
   const { conversationId } = React.use(params);
   const router = useRouter();
-  
-  const conversation = useQuery(api.conversation.get, { 
-    id: conversationId as Id<"conversations"> 
+
+  const conversation = useQuery(api.conversation.get, {
+    id: conversationId as Id<"conversations">
+  });
+
+  const isCreator = useQuery(api.conversations.isGroupCreator, {
+    conversationId: conversationId as Id<"conversations">
   });
 
   const [removeFriendDialogOpen, setRemoveFriendDialogOpen] = React.useState(false);
@@ -32,25 +38,22 @@ const ConversationPage = ({ params }: Props) => {
   const [leaveGroupDialogOpen, setLeaveGroupDialogOpen] = React.useState(false);
   const [callType, setCallType] = React.useState<"audio" | "video" | null>(null);
 
-  if (conversation === undefined) {
+  if (conversation === undefined || isCreator === undefined) {
     return (
       <div className='w-full h-full flex items-center justify-center'>
-        <Loader2 className='h-8 w-8 animate-spin'/>
+        <Loader2 className='h-8 w-8 animate-spin' />
       </div>
     );
   }
 
   if (conversation === null) {
-    return (
-      <p className='w-full h-full flex items-center justify-center'>
-        Conversation not found
-      </p>
-    );
+    router.push('/conversations');
+    return null;
   }
 
   // Type guard to check if conversation has otherMember property
-  const hasOtherMember = (conv: any): conv is { 
-    isGroup: boolean; 
+  const hasOtherMember = (conv: any): conv is {
+    isGroup: boolean;
     otherMember: { username?: string; imageUrl?: string }
   } => {
     return !conv.isGroup && 'otherMember' in conv;
@@ -68,42 +71,71 @@ const ConversationPage = ({ params }: Props) => {
 
   const getImageUrl = () => {
     if (conversation.isGroup) {
-      return undefined;
+      return conversation.imageUrl || undefined;
     } else if (hasOtherMember(conversation)) {
       return conversation.otherMember.imageUrl;
     }
     return undefined;
   };
 
-  // Handle successful friend removal
-  const handleRemoveFriendSuccess = () => {
-    // Navigate away from this conversation to avoid the "Conversation not found" error
+  // Handle successful friend removal or group action
+  const handleSuccess = () => {
+    // Navigate away from this conversation
     router.push('/conversations');
+  };
+
+  // Generate group options based on creator status
+  const getGroupOptions = () => {
+    if (!conversation.isGroup) return [];
+
+    const options = [];
+
+    // Everyone can leave the group
+    options.push({
+      label: "Leave group",
+      destructive: true,
+      onClick: () => setLeaveGroupDialogOpen(true)
+    });
+
+    // Only creator can delete the group
+    if (isCreator) {
+      options.push({
+        label: "Delete group",
+        destructive: true,
+        onClick: () => setDeleteGroupDialogOpen(true)
+      });
+    }
+
+    return options;
   };
 
   return (
     <ConversationConatiner>
-      <RemoveFriendDialog 
-        conversationId={conversationId} 
-        open={removeFriendDialogOpen} 
+      <RemoveFriendDialog
+        conversationId={conversationId}
+        open={removeFriendDialogOpen}
         setOpen={setRemoveFriendDialogOpen}
-        onSuccess={handleRemoveFriendSuccess}
+        onSuccess={handleSuccess}
       />
-      <Header 
+
+      <DeleteGroupDialog
+        conversationId={conversationId}
+        open={deleteGroupDialogOpen}
+        setOpen={setDeleteGroupDialogOpen}
+        onSuccess={handleSuccess}
+      />
+
+      <LeaveGroupDialog
+        conversationId={conversationId}
+        open={leaveGroupDialogOpen}
+        setOpen={setLeaveGroupDialogOpen}
+        onSuccess={handleSuccess}
+      />
+
+      <Header
         name={getName()}
         imageUrl={getImageUrl()}
-        options={conversation.isGroup ? [
-          {
-            label: "Leave group",
-            destructive: false,
-            onClick: () => setLeaveGroupDialogOpen(true)
-          },
-          {
-            label: "Delete group",
-            destructive: true,
-            onClick: () => setDeleteGroupDialogOpen(true)
-          }
-        ] : [
+        options={conversation.isGroup ? getGroupOptions() : [
           {
             label: "Remove friend",
             destructive: true,

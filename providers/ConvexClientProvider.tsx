@@ -4,6 +4,7 @@ import LoadingLogo from '@/components/ui/shared/LoadingLogo';
 import { ClerkProvider, useAuth } from "@clerk/nextjs";
 import { Authenticated, AuthLoading, ConvexReactClient, Unauthenticated } from "convex/react";
 import { ConvexProviderWithClerk } from "convex/react-clerk";
+import { UserProvider } from "@/components/providers/UserProvider";
 
 const convex = new ConvexReactClient(process.env.NEXT_PUBLIC_CONVEX_URL!);
 
@@ -14,7 +15,9 @@ export const ConvexClientProvider = ({ children }: { children: React.ReactNode }
         <AuthLoading>
           <LoadingLogo />
         </AuthLoading>
-        <Authenticated>{children}</Authenticated>
+        <Authenticated>
+          <UserProvider>{children}</UserProvider>
+        </Authenticated>
         <Unauthenticated>{children}</Unauthenticated>
       </ConvexProviderWithClerk>
     </ClerkProvider>

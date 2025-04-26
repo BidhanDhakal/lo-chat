@@ -5,16 +5,17 @@ import { cn } from '@/lib/utils';
 import { api } from '@/convex/_generated/api';
 import { useMutation } from 'convex/react';
 import { format } from 'date-fns';
-import { Download, Loader2 } from 'lucide-react';
+import { Download, Loader2, FileText } from 'lucide-react';
 import React, { useEffect, useState } from 'react';
 import ImagePopup from './ImagePopup';
+import EmojiParser from '@/components/ui/emoji-parser';
 
 interface MessageProps {
   fromCurrentUser: boolean;
   senderImage?: string;
   senderName: string;
   lastByUser: boolean;
-  content: string;
+  content: string | ArrayBuffer;
   createdAt: number;
   type: string;
 }
@@ -28,62 +29,85 @@ const Message = ({
   createdAt,
   type
 }: MessageProps) => {
+  // Filter out the shield emoji from sender name for display purposes only
+  const displaySenderName = senderName.replace(/🛡️/g, '');
+
   const [imageUrl, setImageUrl] = useState<string | null>(null);
   const [isLoading, setIsLoading] = useState(false);
   const [isImagePopupOpen, setIsImagePopupOpen] = useState(false);
   const [showDownloadButton, setShowDownloadButton] = useState(false);
+  const [documentInfo, setDocumentInfo] = useState<{ storageId: string; fileName: string; fileType: string } | null>(null);
+  const [documentUrl, setDocumentUrl] = useState<string | null>(null);
   const getUrl = useMutation(api.files.getUrl);
 
-  // Load image URL for image messages
+  // Load URLs for image and document messages
   useEffect(() => {
-    const loadImageUrl = async () => {
+    const loadUrls = async () => {
       if (type === 'image') {
         try {
           setIsLoading(true);
-          const url = await getUrl({ storageId: content });
+          const url = await getUrl({ storageId: content as string });
           setImageUrl(url);
         } catch (error) {
           console.error("Failed to load image:", error);
         } finally {
           setIsLoading(false);
         }
+      } else if (type === 'document') {
+        try {
+          setIsLoading(true);
+          let docInfo;
+          try {
+            // Try to parse as JSON first (new format)
+            docInfo = JSON.parse(content as string);
+          } catch (e) {
+            // If parsing fails, use the old format where content is just the storageId
+            docInfo = {
+              storageId: content as string,
+              fileName: 'Document',
+              fileType: 'application/octet-stream'
+            };
+          }
+          setDocumentInfo(docInfo);
+          const url = await getUrl({ storageId: docInfo.storageId });
+          setDocumentUrl(url);
+        } catch (error) {
+          console.error("Failed to load document:", error);
+        } finally {
+          setIsLoading(false);
+        }
       }
     };
 
-    loadImageUrl();
+    loadUrls();
   }, [content, type, getUrl]);
 
-  const handleDownload = async (e: React.MouseEvent) => {
+  const handleDownload = async (e: React.MouseEvent, url: string, fileName: string) => {
     e.stopPropagation();
-    if (!imageUrl) return;
-
-    const url = imageUrl as string;
+    if (!url) return;
 
     try {
-      // Fetch the image as a blob
-      const response = await fetch(imageUrl);
+      // Fetch the file as a blob
+      const response = await fetch(url);
       const blob = await response.blob();
-      
-      // Create a blob URL for the image
+
+      // Create a blob URL for the file
       const blobUrl = URL.createObjectURL(blob);
-      
+
       // Create a temporary anchor element
       const a = document.createElement('a');
       a.href = blobUrl;
-      
-      // Extract filename from URL or use a default name
-      const filename = imageUrl.split('/').pop()?.split('?')[0] || 'image.jpg';
-      a.download = filename;
-      
+      a.download = fileName;
+
       // Append to the document, click it, and remove it
       document.body.appendChild(a);
       a.click();
-      
+
       // Clean up
       document.body.removeChild(a);
       URL.revokeObjectURL(blobUrl);
     } catch (error) {
-      console.error("Error downloading image:", error);
+      console.error("Error downloading file:", error);
     }
   };
 
@@ -91,18 +115,18 @@ const Message = ({
   const renderTextWithLinks = (text: string) => {
     // Regular expression to match URLs
     const urlRegex = /(https?:\/\/[^\s]+)|(www\.[^\s]+)|([^\s]+\.(com|org|net|edu|gov|mil|io|co|me|app|dev)[^\s]*)/g;
-    
+
     // If no URLs in the text, return the text as is
     if (!text.match(urlRegex)) {
       return text;
     }
-    
+
     // Create an array to hold the result
     const result: React.ReactNode[] = [];
-    
+
     // Keep track of the last index processed
     let lastIndex = 0;
-    
+
     // Find all matches and process them
     let match;
     while ((match = urlRegex.exec(text)) !== null) {
@@ -114,11 +138,11 @@ const Message = ({
           </span>
         );
       }
-      
+
       // Get the matched URL
       let url = match[0];
       let displayUrl = url;
-      
+
       // Add https:// prefix if needed
       if (url.startsWith('www.')) {
         url = 'https://' + url;
@@ -128,10 +152,10 @@ const Message = ({
           url = 'https://' + url;
         }
       }
-      
+
       // Add the link
       result.push(
-        <a 
+        <a
           key={`link-${match.index}`}
           href={url}
           target="_blank"
@@ -142,11 +166,11 @@ const Message = ({
           {displayUrl}
         </a>
       );
-      
+
       // Update the last index
       lastIndex = match.index + match[0].length;
     }
-    
+
     // Add any remaining text
     if (lastIndex < text.length) {
       result.push(
@@ -155,90 +179,116 @@ const Message = ({
         </span>
       );
     }
-    
+
     return result;
   };
 
   return (
-    <>
-      <div className={cn(
-        "flex gap-2 w-full",
-        fromCurrentUser ? "justify-end" : "justify-start",
-        lastByUser ? "mt-1" : "mt-4"
-      )}>
+    <div className={cn(
+      "flex mb-1 py-1",
+      fromCurrentUser ? "justify-end" : "justify-start"
+    )}>
+      <div className="flex items-end max-w-[85%] gap-2">
         {!fromCurrentUser && !lastByUser && (
-          <Avatar className="h-8 w-8">
+          <Avatar className="h-6 w-6 shrink-0">
             <AvatarImage src={senderImage} />
-            <AvatarFallback>
-              {senderName.substring(0, 2).toUpperCase()}
-            </AvatarFallback>
+            <AvatarFallback>{displaySenderName.charAt(0).toUpperCase()}</AvatarFallback>
           </Avatar>
         )}
-        {!fromCurrentUser && lastByUser && <div className="w-8" />}
-        
-        <div className={cn(
-          "max-w-[80%]",
-          fromCurrentUser ? "bg-primary text-primary-foreground" : "bg-muted",
-          "rounded-lg px-3 py-2"
-        )}>
-          {type === 'text' && (
-            <p className="text-sm break-words">
-              {renderTextWithLinks(content)}
-            </p>
-          )}
-          
-          {type === 'image' && (
-            <div 
-              className="relative group"
-              onMouseEnter={() => setShowDownloadButton(true)}
-              onMouseLeave={() => setShowDownloadButton(false)}
-            >
-              {isLoading ? (
-                <div className="flex items-center justify-center h-[200px] w-[250px] bg-muted rounded">
-                  <Loader2 className="h-8 w-8 animate-spin text-muted-foreground" />
-                </div>
-              ) : imageUrl ? (
-                <div className="image-container h-[200px] w-[250px] flex items-center justify-center bg-black/5 rounded overflow-hidden">
-                  <img 
-                    src={imageUrl} 
-                    alt="Image message" 
-                    className="max-h-[200px] max-w-[250px] object-contain cursor-pointer hover:opacity-90 transition"
-                    onLoad={() => setIsLoading(false)}
-                    onClick={() => setIsImagePopupOpen(true)}
-                  />
-                  {showDownloadButton && (
-                    <button
-                      onClick={handleDownload}
-                      className="absolute top-2 right-2 bg-black/50 text-white rounded-full p-1 hover:bg-black/70 transition"
-                      title="Download image"
-                    >
-                      <Download className="h-4 w-4" />
-                    </button>
-                  )}
-                </div>
-              ) : (
-                <div className="flex items-center justify-center h-[200px] w-[250px] bg-muted rounded">
-                  <p className="text-sm text-muted-foreground">Failed to load image</p>
-                </div>
-              )}
+
+        {!fromCurrentUser && lastByUser && (
+          <div className="w-6 shrink-0" />
+        )}
+
+        <div>
+          {!lastByUser && !fromCurrentUser && (
+            <div className="text-xs text-muted-foreground mb-1 ml-1">
+              {displaySenderName}
             </div>
           )}
-          
-          <p className="text-xs opacity-50 mt-1 text-right">
-            {format(createdAt, 'p')}
-          </p>
+
+          <div className={cn(
+            "rounded-lg px-3 py-2",
+            fromCurrentUser ? "bg-primary text-primary-foreground" : "bg-muted"
+          )}>
+            {type === 'text' && (
+              <p className="whitespace-pre-wrap">
+                <EmojiParser text={renderTextWithLinks(content as string)} />
+              </p>
+            )}
+
+            {type === 'image' && (
+              <div
+                className="relative group rounded-lg overflow-hidden"
+                onMouseEnter={() => setShowDownloadButton(true)}
+                onMouseLeave={() => setShowDownloadButton(false)}
+              >
+                {isLoading ? (
+                  <div className="flex items-center justify-center h-[200px] w-[250px] bg-muted">
+                    <Loader2 className="h-8 w-8 animate-spin text-muted-foreground" />
+                  </div>
+                ) : imageUrl ? (
+                  <div className="h-[200px] w-[250px] flex items-center justify-center bg-black/5">
+                    <img
+                      src={imageUrl}
+                      alt="Image message"
+                      className="max-h-[200px] max-w-[250px] object-contain cursor-pointer hover:opacity-90 transition"
+                      onLoad={() => setIsLoading(false)}
+                      onClick={() => setIsImagePopupOpen(true)}
+                    />
+                    {showDownloadButton && (
+                      <button
+                        onClick={(e) => handleDownload(e, imageUrl, 'image.jpg')}
+                        className="absolute top-2 right-2 bg-black/50 text-white rounded-full p-1 hover:bg-black/70 transition"
+                        title="Download image"
+                      >
+                        <Download className="h-4 w-4" />
+                      </button>
+                    )}
+                  </div>
+                ) : (
+                  <div className="flex items-center justify-center h-[200px] w-[250px] bg-muted">
+                    <p className="text-sm text-muted-foreground">Failed to load image</p>
+                  </div>
+                )}
+              </div>
+            )}
+
+            {type === 'document' && documentInfo && (
+              <div
+                className="flex items-center gap-2 p-2 bg-background/50 rounded-lg cursor-pointer hover:bg-background/70 transition group"
+                onClick={(e) => documentUrl && handleDownload(e, documentUrl, documentInfo.fileName)}
+              >
+                <div className="flex items-center gap-2 flex-1 min-w-0">
+                  <FileText className="h-5 w-5 text-muted-foreground group-hover:text-foreground transition-colors" />
+                  <span className="font-medium truncate max-w-[200px]">{documentInfo.fileName}</span>
+                </div>
+                <Download className="h-4 w-4 text-muted-foreground group-hover:text-foreground transition-colors" />
+              </div>
+            )}
+
+            <p className="text-xs opacity-50 mt-1 text-right">
+              {format(createdAt, 'p')}
+            </p>
+          </div>
         </div>
+
+        {fromCurrentUser && !lastByUser && (
+          <Avatar className="h-6 w-6 shrink-0">
+            <AvatarImage src={senderImage} />
+            <AvatarFallback>{displaySenderName.charAt(0).toUpperCase()}</AvatarFallback>
+          </Avatar>
+        )}
       </div>
 
-      {/* Image Popup */}
-      {imageUrl && (
-        <ImagePopup 
+      {isImagePopupOpen && imageUrl && (
+        <ImagePopup
           imageUrl={imageUrl}
           isOpen={isImagePopupOpen}
           onClose={() => setIsImagePopupOpen(false)}
         />
       )}
-    </>
+    </div>
   );
 };
 
