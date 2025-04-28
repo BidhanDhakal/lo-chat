@@ -15,9 +15,10 @@ interface DMConversationItemProps {
     lastMessageContent?: string;
     lastMessageSender?: string;
     isGroup?: boolean;
+    className?: string;
 }
 
-const DMConversationItem = ({ id, imageUrl, username, lastMessageContent, lastMessageSender, isGroup }: DMConversationItemProps) => {
+const DMConversationItem = ({ id, imageUrl, username, lastMessageContent, lastMessageSender, isGroup, className }: DMConversationItemProps) => {
     const [finalImageUrl, setFinalImageUrl] = useState<string>(imageUrl);
     const getUrl = useMutation(api.files.getUrl);
 
@@ -39,7 +40,7 @@ const DMConversationItem = ({ id, imageUrl, username, lastMessageContent, lastMe
         loadConvexImage();
     }, [imageUrl, getUrl]);
 
-    return <Link href={`/conversations/${id}`} className="w-full">
+    return <Link href={`/conversations/${id}`} className={`w-full ${className || ''}`}>
         <Card className="p-2 flex flex-row items-center gap-4 truncate">
             <div className="flex flex-row items-center gap-4 truncate">
                 <Avatar className="h-12 w-12 rounded-full">

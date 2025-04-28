@@ -18,6 +18,7 @@ import { toast } from "sonner";
 import { useRouter } from "next/navigation";
 import Image from "next/image";
 import EmojiParser from "@/components/ui/emoji-parser";
+import { Avatar, AvatarImage, AvatarFallback } from "@/components/ui/avatar";
 
 interface GroupChatDialogProps {
     open: boolean;
@@ -191,7 +192,7 @@ export const GroupChatDialog = ({
 
                     <div className="mt-4">
                         <h3 className="text-sm font-medium mb-2">Select Friends</h3>
-                        <div className="max-h-60 overflow-y-auto space-y-2 border rounded-md p-2">
+                        <div className="max-h-60 overflow-y-auto space-y-2 border rounded-md p-2 hide-scrollbar">
                             {!friends ? (
                                 <div className="flex justify-center items-center h-20">
                                     <Loader2 className="h-6 w-6 animate-spin text-muted-foreground" />
@@ -204,8 +205,7 @@ export const GroupChatDialog = ({
                                 friends.map((friend: any) => (
                                     <div
                                         key={friend._id}
-                                        className={`flex items-center gap-2 p-2 rounded-md cursor-pointer hover:bg-muted ${selectedUsers.includes(friend._id) ? "bg-muted" : ""
-                                            }`}
+                                        className={`flex items-center gap-2 p-2 rounded-md cursor-pointer hover:bg-muted ${selectedUsers.includes(friend._id) ? "bg-muted" : ""}`}
                                         onClick={() => toggleUserSelection(friend._id)}
                                     >
                                         <input
@@ -214,6 +214,10 @@ export const GroupChatDialog = ({
                                             onChange={() => { }}
                                             className="h-4 w-4"
                                         />
+                                        <Avatar className="h-8 w-8">
+                                            <AvatarImage src={friend.imageUrl} />
+                                            <AvatarFallback>{friend.username?.[0]?.toUpperCase() || "?"}</AvatarFallback>
+                                        </Avatar>
                                         <span className="font-medium">
                                             <EmojiParser text={friend.username} />
                                         </span>

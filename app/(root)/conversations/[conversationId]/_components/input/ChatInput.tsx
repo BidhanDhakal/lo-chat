@@ -8,6 +8,7 @@ import { useMutation } from 'convex/react';
 import { Smile, Image, Loader2, Send, X, Plus, FileText } from 'lucide-react';
 import React, { useRef, useEffect, useState } from 'react';
 import { toast } from 'sonner';
+import EmojiPicker, { Theme } from 'emoji-picker-react';
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -96,7 +97,10 @@ const ChatInput = () => {
         textareaRef.current.style.height = 'auto';
       }
 
-      textareaRef.current?.focus();
+      // Use a timeout to ensure focus after DOM update
+      setTimeout(() => {
+        textareaRef.current?.focus();
+      }, 0);
     } catch (error) {
       console.error(error);
       toast.error("Failed to send message");
@@ -229,9 +233,8 @@ const ChatInput = () => {
     }
   };
 
-  const handleEmojiSelect = (emoji: string) => {
-    setContent(prev => prev + emoji);
-    setIsEmojiPickerOpen(false);
+  const handleEmojiSelect = (emojiObject: any) => {
+    setContent(prev => prev + emojiObject.emoji);
     textareaRef.current?.focus();
   };
 
@@ -322,22 +325,16 @@ const ChatInput = () => {
               {isEmojiPickerOpen && (
                 <div
                   ref={emojiPickerRef}
-                  className="absolute bottom-full right-0 mb-2 bg-background rounded-xl p-3 shadow-lg border border-border w-[300px] max-h-[300px] overflow-y-auto [&::-webkit-scrollbar]:hidden [-ms-overflow-style:none] [scrollbar-width:none]"
+                  className="absolute bottom-full right-0 mb-2"
                 >
-                  <div className="grid grid-cols-8 gap-1">
-                    {commonEmojis.map((emoji, index) => (
-                      <button
-                        key={index}
-                        className="text-2xl hover:bg-muted/50 p-1.5 rounded-lg cursor-pointer transition-colors flex items-center justify-center"
-                        onClick={() => {
-                          handleEmojiSelect(emoji);
-                          setIsEmojiPickerOpen(false);
-                        }}
-                      >
-                        {emoji}
-                      </button>
-                    ))}
-                  </div>
+                  <EmojiPicker
+                    onEmojiClick={handleEmojiSelect}
+                    width={300}
+                    height={400}
+                    theme={Theme.DARK}
+                    searchPlaceholder="Search emoji..."
+                    lazyLoadEmojis={true}
+                  />
                 </div>
               )}
             </div>

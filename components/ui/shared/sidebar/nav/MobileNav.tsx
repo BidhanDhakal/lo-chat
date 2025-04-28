@@ -14,11 +14,11 @@ import { Badge } from "@/components/ui/badge";
 const MobileNav = () => {
     const paths = useNavigation();
 
-    const {isActive} = useConversation();
-    if(isActive) return null;
+    const { isActive } = useConversation();
+    if (isActive) return null;
 
     return (
-        <Card className="fixed bottom-4 w-[calc(100%-32px)] lg:hidden flex items-center px-4 py-2">
+        <Card className="fixed bottom-4 w-[calc(100%-32px)] lg:hidden flex items-center px-4 py-2 z-50">
             <nav className="w-full">
                 <ul className="flex justify-evenly items-center">
                     {paths.map((path, id) => {
@@ -46,7 +46,7 @@ const MobileNav = () => {
                             </li>
                         );
                     })}
-                    <li><ThemeToggle/></li>
+                    <li><ThemeToggle /></li>
                     <li>
                         <UserButton />
                     </li>

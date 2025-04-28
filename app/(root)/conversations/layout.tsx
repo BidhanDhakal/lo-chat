@@ -35,28 +35,31 @@ const ConversationsLayout = ({ children }: Props) => {
                 {conversations ? conversations.length === 0 ?
                     <p className="w-full h-full flex items-center justify-center">
                         No conversations found
-                    </p> : conversations.map(conversations => {
-                        if (conversations.conversation.isGroup) {
+                    </p> : conversations.map((conversationItem, idx) => {
+                        const isLast = idx === conversations.length - 1;
+                        if (conversationItem.conversation.isGroup) {
                             return (
                                 <DMConversationItem
-                                    key={conversations.conversation._id}
-                                    id={conversations.conversation._id}
-                                    username={conversations.conversation.name || "Group"}
-                                    imageUrl={conversations.conversation.imageUrl || "/images/placeholder.jpg"}
-                                    lastMessageContent={conversations.lastMessage?.content}
-                                    lastMessageSender={conversations.lastMessage?.sender}
+                                    key={conversationItem.conversation._id}
+                                    id={conversationItem.conversation._id}
+                                    username={conversationItem.conversation.name || "Group"}
+                                    imageUrl={conversationItem.conversation.imageUrl || "/images/placeholder.jpg"}
+                                    lastMessageContent={conversationItem.lastMessage?.content}
+                                    lastMessageSender={conversationItem.lastMessage?.sender}
                                     isGroup={true}
+                                    className={isLast ? "mb-32" : ""}
                                 />
                             );
                         } else {
                             return (
                                 <DMConversationItem
-                                    key={conversations.conversation._id}
-                                    id={conversations.conversation._id}
-                                    username={conversations.otherMember?.username || ""}
-                                    imageUrl={conversations.otherMember?.imageUrl || ""}
-                                    lastMessageContent={conversations.lastMessage?.content}
-                                    lastMessageSender={conversations.lastMessage?.sender}
+                                    key={conversationItem.conversation._id}
+                                    id={conversationItem.conversation._id}
+                                    username={conversationItem.otherMember?.username || ""}
+                                    imageUrl={conversationItem.otherMember?.imageUrl || ""}
+                                    lastMessageContent={conversationItem.lastMessage?.content}
+                                    lastMessageSender={conversationItem.lastMessage?.sender}
+                                    className={isLast ? "mb-32" : ""}
                                 />
                             );
                         }

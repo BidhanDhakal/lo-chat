@@ -4,6 +4,7 @@ import { Card } from "@/components/ui/card";
 import { useConversation } from "@/hooks/useConversation";
 import { cn } from "@/lib/utils";
 import { PropsWithChildren } from "react";
+import './item-list-scrollbar.css';
 
 type Props = PropsWithChildren<{
   title: string;
@@ -18,7 +19,7 @@ const ItemList = ({ children, title, action: Action }: Props) => {
         <h1 className="text-2xl font-semibold tracking-tighter">{title}</h1>
         {Action ? Action : null}
       </div>
-      <div className="w-full h-full flex flex-col items-center justify-start gap-2">{children}</div>
+      <div className="w-full h-full overflow-y-auto flex flex-col items-stretch justify-start gap-2 pb-20 lg:pb-12 hide-scrollbar">{children}</div>
     </Card>
   );
 };

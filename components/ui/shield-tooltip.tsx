@@ -59,11 +59,9 @@ const ShieldTooltip = ({ size = 20, className }: ShieldTooltipProps) => {
                 <TooltipContent
                     side="top"
                     align="center"
-                    className="bg-blue-600 border-blue-700 meta-verified-tooltip"
+                    className="bg-black text-white px-2 py-1 rounded shadow"
                 >
-                    <div className="flex items-center justify-center text-white">
-                        <span className="font-medium">Verified</span>
-                    </div>
+                    <span>Verified User</span>
                 </TooltipContent>
             </Tooltip>
         </TooltipProvider>
