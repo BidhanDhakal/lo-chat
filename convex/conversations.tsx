@@ -19,6 +19,7 @@ type ConversationDetails = {
     conversation: ConversationWithTimestamp;
     otherMember?: any;
     lastMessage: any;
+    groupMembers?: string[];
 } | null;
 
 export const get = query({
@@ -135,7 +136,22 @@ export const get = query({
 
                     // Handle group conversations
                     if (conversation.isGroup) {
-                        return { conversation, lastMessage };
+                        // Get all members' usernames for group chats
+                        const memberUsernames = await Promise.all(
+                            allconversationMemberships.map(async (membership) => {
+                                try {
+                                    const member = await ctx.db.get(membership.memberId);
+                                    return member?.username || null;
+                                } catch (error) {
+                                    console.error("Error fetching member:", error);
+                                    return null;
+                                }
+                            })
+                        );
+
+                        // Filter out null values and return the conversation with members
+                        const groupMembers = memberUsernames.filter((username): username is string => username !== null);
+                        return { conversation, lastMessage, groupMembers };
                     }
                     // Handle direct conversations
                     else {

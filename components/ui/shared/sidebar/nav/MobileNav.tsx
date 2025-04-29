@@ -18,7 +18,7 @@ const MobileNav = () => {
     if (isActive) return null;
 
     return (
-        <Card className="fixed bottom-4 w-[calc(100%-32px)] lg:hidden flex items-center px-4 py-2 z-50">
+        <Card className="fixed bottom-0 w-[calc(100%-32px)] lg:hidden flex items-center px-4 py-2 z-50">
             <nav className="w-full">
                 <ul className="flex justify-evenly items-center">
                     {paths.map((path, id) => {

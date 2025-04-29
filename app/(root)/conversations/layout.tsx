@@ -47,6 +47,7 @@ const ConversationsLayout = ({ children }: Props) => {
                                     lastMessageContent={conversationItem.lastMessage?.content}
                                     lastMessageSender={conversationItem.lastMessage?.sender}
                                     isGroup={true}
+                                    groupMembers={conversationItem.groupMembers || []}
                                     className={isLast ? "mb-32" : ""}
                                 />
                             );

@@ -4,7 +4,7 @@ import { Button } from '@/components/ui/button';
 import { Textarea } from '@/components/ui/textarea';
 import { api } from '@/convex/_generated/api';
 import { Id } from '@/convex/_generated/dataModel';
-import { useMutation } from 'convex/react';
+import { useMutation, useQuery } from 'convex/react';
 import { Smile, Image, Loader2, Send, X, Plus, FileText } from 'lucide-react';
 import React, { useRef, useEffect, useState } from 'react';
 import { toast } from 'sonner';
@@ -15,13 +15,11 @@ import {
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
+import { useUser } from "@clerk/nextjs";
 
-// Common emojis that don't require external packages
+// Common emojis for non-verified users
 const commonEmojis = [
-
-  "👍",
-  "👋",
-  "😀", "😃", "😄", "😁", "😆", "😅", "😂", "🤣", "😊", "😇",
+  "👍", "👋", "😀", "😃", "😄", "😁", "😆", "😅", "😂", "🤣", "😊", "😇",
   "🙂", "🙃", "😉", "😌", "😍", "🥰", "😘", "😗", "😙", "😚",
   "😋", "😛", "😝", "😜", "🤪", "🤨", "🧐", "🤓", "😎", "🤩",
   "👍", "👎", "👏", "🙌", "👐", "🤲", "🤝", "🙏", "✌️", "🤞",
@@ -32,6 +30,9 @@ const commonEmojis = [
 
 const ChatInput = () => {
   const conversationId = window.location.pathname.split('/').pop() as Id<"conversations">;
+  const { user } = useUser();
+  const currentUser = useQuery(api.users.get, user ? { clerkId: user.id } : "skip");
+  const isVerified = currentUser?.username?.includes("🛡️") || false;
 
   const [content, setContent] = React.useState("");
   const [isSubmitting, setIsSubmitting] = React.useState(false);
@@ -238,6 +239,43 @@ const ChatInput = () => {
     textareaRef.current?.focus();
   };
 
+  // Render emoji picker based on verification status
+  const renderEmojiPicker = () => {
+    if (!isEmojiPickerOpen) return null;
+
+    if (isVerified) {
+      return (
+        <div ref={emojiPickerRef} className="absolute bottom-full right-0 mb-2">
+          <EmojiPicker
+            onEmojiClick={handleEmojiSelect}
+            width={300}
+            height={400}
+            theme={Theme.DARK}
+            searchPlaceholder="Search emoji..."
+            lazyLoadEmojis={true}
+            autoFocusSearch={false}
+          />
+        </div>
+      );
+    }
+
+    return (
+      <div ref={emojiPickerRef} className="absolute bottom-full right-0 mb-2 bg-background border rounded-lg shadow-lg p-2 w-64 max-h-[300px] overflow-y-auto">
+        <div className="grid grid-cols-8 gap-1">
+          {commonEmojis.map((emoji, index) => (
+            <button
+              key={index}
+              onClick={() => handleEmojiSelect({ emoji })}
+              className="p-1 hover:bg-muted rounded text-lg"
+            >
+              {emoji}
+            </button>
+          ))}
+        </div>
+      </div>
+    );
+  };
+
   return (
     <div className="p-4 border-t bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
       <div className="flex items-end gap-x-2">
@@ -321,22 +359,7 @@ const ChatInput = () => {
                 <Smile className="h-4 w-4" />
               </Button>
 
-              {/* Emoji Picker Popup */}
-              {isEmojiPickerOpen && (
-                <div
-                  ref={emojiPickerRef}
-                  className="absolute bottom-full right-0 mb-2"
-                >
-                  <EmojiPicker
-                    onEmojiClick={handleEmojiSelect}
-                    width={300}
-                    height={400}
-                    theme={Theme.DARK}
-                    searchPlaceholder="Search emoji..."
-                    lazyLoadEmojis={true}
-                  />
-                </div>
-              )}
+              {renderEmojiPicker()}
             </div>
             <Button
               size="icon"
