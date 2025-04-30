@@ -3,17 +3,34 @@
 import ItemList from '@/components/ui/shared/item-list/ItemList';
 import { api } from '@/convex/_generated/api';
 import { useQuery } from 'convex/react';
-import { Loader2 } from 'lucide-react';
-import React from 'react'
+import { Loader2, Search } from 'lucide-react';
+import React, { useState } from 'react'
 import DMConversationItem from './_components/DMConversationItem';
 import { GroupChatDialog } from './_components/GroupChatDialog';
 import { Button } from '@/components/ui/button';
+import { Input } from '@/components/ui/input';
 
 type Props = React.PropsWithChildren<{}>;
 
 const ConversationsLayout = ({ children }: Props) => {
     const [groupDialogOpen, setGroupDialogOpen] = React.useState(false);
+    const [searchQuery, setSearchQuery] = useState("");
     const conversations = useQuery(api.conversations.get)
+
+    // Filter conversations based on search query
+    const filteredConversations = conversations?.filter(conversation => {
+        if (!searchQuery) return true;
+
+        const searchLower = searchQuery.toLowerCase();
+
+        if (conversation.conversation.isGroup) {
+            // Search in group name
+            return conversation.conversation.name?.toLowerCase().includes(searchLower);
+        } else {
+            // Search in friend's username
+            return conversation.otherMember?.username?.toLowerCase().includes(searchLower);
+        }
+    });
 
     return (
         <>
@@ -32,11 +49,24 @@ const ConversationsLayout = ({ children }: Props) => {
                     </Button>
                 }
             >
-                {conversations ? conversations.length === 0 ?
+                {/* Search input */}
+                <div className="relative mb-4">
+                    <div className="relative">
+                        <Search className="absolute left-2 top-2.5 h-4 w-4 text-muted-foreground" />
+                        <Input
+                            placeholder="Search friends..."
+                            value={searchQuery}
+                            onChange={(e) => setSearchQuery(e.target.value)}
+                            className="pl-8 bg-muted/50 border-none focus-visible:ring-1 focus-visible:ring-ring"
+                        />
+                    </div>
+                </div>
+
+                {conversations ? filteredConversations?.length === 0 ?
                     <p className="w-full h-full flex items-center justify-center">
-                        No conversations found
-                    </p> : conversations.map((conversationItem, idx) => {
-                        const isLast = idx === conversations.length - 1;
+                        {searchQuery ? "No friends found" : "No conversations found"}
+                    </p> : filteredConversations?.map((conversationItem, idx) => {
+                        const isLast = idx === filteredConversations.length - 1;
                         if (conversationItem.conversation.isGroup) {
                             return (
                                 <DMConversationItem
