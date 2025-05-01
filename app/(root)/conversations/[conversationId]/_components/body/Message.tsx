@@ -208,8 +208,8 @@ const Message = ({
           )}
 
           <div className={cn(
-            "rounded-lg px-3 py-2",
-            fromCurrentUser ? "bg-primary text-primary-foreground" : "bg-muted"
+            type !== 'image' && "rounded-lg px-3 py-2",
+            type !== 'image' && (fromCurrentUser ? "bg-primary text-primary-foreground" : "bg-muted")
           )}>
             {type === 'text' && (
               <p className="whitespace-pre-wrap">
@@ -219,20 +219,20 @@ const Message = ({
 
             {type === 'image' && (
               <div
-                className="relative group rounded-lg overflow-hidden"
+                className="relative"
                 onMouseEnter={() => setShowDownloadButton(true)}
                 onMouseLeave={() => setShowDownloadButton(false)}
               >
                 {isLoading ? (
-                  <div className="flex items-center justify-center h-[200px] w-[250px] bg-muted">
+                  <div className="flex items-center justify-center h-[200px] w-[250px]">
                     <Loader2 className="h-8 w-8 animate-spin text-muted-foreground" />
                   </div>
                 ) : imageUrl ? (
-                  <div className="h-[200px] w-[250px] flex items-center justify-center bg-black/5">
+                  <div className="flex">
                     <img
                       src={imageUrl}
                       alt="Image message"
-                      className="max-h-[200px] max-w-[250px] object-contain cursor-pointer hover:opacity-90 transition"
+                      className="max-h-[200px] max-w-[250px] object-contain cursor-pointer hover:opacity-90 transition rounded-2xl"
                       onLoad={() => setIsLoading(false)}
                       onClick={() => setIsImagePopupOpen(true)}
                     />
@@ -247,7 +247,7 @@ const Message = ({
                     )}
                   </div>
                 ) : (
-                  <div className="flex items-center justify-center h-[200px] w-[250px] bg-muted">
+                  <div className="flex items-center justify-center h-[200px] w-[250px]">
                     <p className="text-sm text-muted-foreground">Failed to load image</p>
                   </div>
                 )}
