@@ -2,14 +2,30 @@
 
 import { api } from '@/convex/_generated/api';
 import { useQuery } from 'convex/react';
-import React from 'react';
+import React, { useEffect, useRef } from 'react';
 import Request from './_components/Request';
 import { Loader2, UserPlus } from 'lucide-react';
 import AddFriendDialog from './_components/AddFriendDialog';
 import { Button } from '@/components/ui/button';
+import notificationSound from '@/lib/NotificationSound';
 
 const FriendsPage = () => {
   const requests = useQuery(api.requests.get);
+  const prevRequestsCountRef = useRef<number>(0);
+
+  // Play sound when new friend request arrives
+  useEffect(() => {
+    if (requests && requests.length > prevRequestsCountRef.current) {
+      // Only play if it's not the initial load (prevRequestsCount > 0)
+      if (prevRequestsCountRef.current > 0) {
+        notificationSound.playRequestSound();
+        console.log("Playing notification sound for new friend request");
+      }
+      prevRequestsCountRef.current = requests.length;
+    } else if (requests) {
+      prevRequestsCountRef.current = requests.length;
+    }
+  }, [requests]);
 
   if (requests === undefined) {
     return (

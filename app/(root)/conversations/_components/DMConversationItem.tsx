@@ -55,7 +55,7 @@ const DMConversationItem = ({
 
     return <Link href={`/conversations/${id}`} className={`w-full ${className || ''}`}>
         <Card className={cn(
-            "p-2 flex flex-row items-center gap-4 truncate",
+            "p-2 flex flex-row items-center gap-4 truncate border border-transparent hover:border-[#3a3f4b]",
             isGroup && "bg-muted/30"
         )}>
             <div className="flex flex-row items-center gap-4 truncate">

@@ -57,8 +57,8 @@ const Request = ({ id, imageUrl, username, email }: RequestProps) => {
   };
 
   return (
-    <Card className="w-full p-2 flex flex-row items-center justify-between gap-2">
-      <div className="flex gap-4 truncate items-center">
+    <Card className="w-full p-3 flex flex-row items-center justify-between gap-3">
+      <div className="flex gap-3 truncate items-center">
         <Avatar>
           <AvatarImage src={imageUrl} />
           <AvatarFallback>
@@ -74,22 +74,21 @@ const Request = ({ id, imageUrl, username, email }: RequestProps) => {
         </div>
       </div>
 
-      <div className="flex items-center gap-2">
+      <div className="flex flex-row items-center justify-center gap-2">
         <TooltipProvider>
           <Tooltip>
             <TooltipTrigger asChild>
               <Button
-                size="sm"
+                size="icon"
                 className="bg-blue-600 hover:bg-blue-700 text-white"
                 disabled={isAccepting || isDenying}
                 onClick={onAccept}
               >
                 {isAccepting ? (
-                  <Loader2 className="h-4 w-4 animate-spin" />
+                  <Loader2 className="h-5 w-5 animate-spin" />
                 ) : (
-                  <Check className="h-4 w-4 mr-1" />
+                  <Check className="h-5 w-5" />
                 )}
-                {!isAccepting && "Accept"}
               </Button>
             </TooltipTrigger>
             <TooltipContent>
@@ -102,17 +101,17 @@ const Request = ({ id, imageUrl, username, email }: RequestProps) => {
           <Tooltip>
             <TooltipTrigger asChild>
               <Button
-                size="sm"
+                size="icon"
                 variant="destructive"
+                className=""
                 disabled={isAccepting || isDenying}
                 onClick={onDeny}
               >
                 {isDenying ? (
-                  <Loader2 className="h-4 w-4 animate-spin" />
+                  <Loader2 className="h-5 w-5 animate-spin" />
                 ) : (
-                  <X className="h-4 w-4 mr-1" />
+                  <X className="h-5 w-5" />
                 )}
-                {!isDenying && "Reject"}
               </Button>
             </TooltipTrigger>
             <TooltipContent>

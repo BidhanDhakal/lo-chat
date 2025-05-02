@@ -54,10 +54,10 @@ const ConversationsLayout = ({ children }: Props) => {
                     <div className="relative">
                         <Search className="absolute left-2 top-2.5 h-4 w-4 text-muted-foreground" />
                         <Input
-                            placeholder="Search friends..."
+                            placeholder="Search..."
                             value={searchQuery}
                             onChange={(e) => setSearchQuery(e.target.value)}
-                            className="pl-8 bg-muted/50 border-none focus-visible:ring-1 focus-visible:ring-ring"
+                            className="pl-8 bg-muted/50 border-none focus-visible:ring-1 focus-visible:ring-ring rounded-3xl"
                         />
                     </div>
                 </div>
