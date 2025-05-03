@@ -3,12 +3,13 @@
 import ItemList from '@/components/ui/shared/item-list/ItemList';
 import { api } from '@/convex/_generated/api';
 import { useQuery } from 'convex/react';
-import { Loader2, Search } from 'lucide-react';
+import { Loader2, Search, UserPlus, UsersRound } from 'lucide-react';
 import React, { useState } from 'react'
 import DMConversationItem from './_components/DMConversationItem';
 import { GroupChatDialog } from './_components/GroupChatDialog';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
 
 type Props = React.PropsWithChildren<{}>;
 
@@ -37,16 +38,26 @@ const ConversationsLayout = ({ children }: Props) => {
             <ItemList
                 title="Conversations"
                 action={
-                    <Button
-                        variant="ghost"
-                        size="icon"
-                        className="rounded-full h-8 w-8 border border-slate-200 dark:border-slate-800"
-                        onClick={() => setGroupDialogOpen(true)}
-                    >
-                        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="h-4 w-4">
-                            <path d="M12 5v14M5 12h14" />
-                        </svg>
-                    </Button>
+                    <TooltipProvider>
+                        <Tooltip>
+                            <TooltipTrigger asChild>
+                                <Button
+                                    variant="ghost"
+                                    size="icon"
+                                    className="rounded-full h-8 w-8 border border-slate-200 dark:border-slate-800"
+                                    onClick={() => setGroupDialogOpen(true)}
+                                >
+                                    <div className="relative">
+                                        <UsersRound className="h-4 w-4" />
+                                        <span className="absolute -top-1 -right-1 text-xs font-bold text-primary">+</span>
+                                    </div>
+                                </Button>
+                            </TooltipTrigger>
+                            <TooltipContent>
+                                <p>Create group</p>
+                            </TooltipContent>
+                        </Tooltip>
+                    </TooltipProvider>
                 }
             >
                 {/* Search input */}

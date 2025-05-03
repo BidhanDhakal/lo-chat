@@ -9,10 +9,10 @@ interface SidebarWrapperProps {
 
 const SidebarWrapper = ({ children }: SidebarWrapperProps) => {
     return (
-        <div className="min-h-screen h-full w-full p-4 flex flex-col lg:flex-row gap-4">
+        <div className="min-h-screen h-full w-full p-4 lg:p-0 flex flex-col lg:flex-row gap-4 lg:gap-0">
             <MobileNav />
             <DesktopNav />
-            <main className="h-full w-full flex gap-4">
+            <main className="h-full w-full flex gap-4 lg:gap-0">
                 {children}
             </main>
         </div>

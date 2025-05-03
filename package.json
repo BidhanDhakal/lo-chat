@@ -22,6 +22,7 @@
     "@radix-ui/react-popover": "^1.1.11",
     "@radix-ui/react-scroll-area": "^1.2.6",
     "@radix-ui/react-slot": "^1.1.2",
+    "@radix-ui/react-tabs": "^1.1.9",
     "@radix-ui/react-tooltip": "^1.1.8",
     "@vercel/analytics": "^1.5.0",
     "class-variance-authority": "^0.7.1",

@@ -9,7 +9,8 @@ export default defineSchema({
     email: v.string(),
   })
     .index("by_clerkId", ["clerkId"])
-    .index("by_email", ["email"]),
+    .index("by_email", ["email"])
+    .index("by_username", ["username"]),
 
   friendships: defineTable({
     userId1: v.id("users"),

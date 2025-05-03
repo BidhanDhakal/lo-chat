@@ -60,6 +60,7 @@ export const create = mutation({
     const identity = await ctx.auth.getUserIdentity();
     if (!identity) throw new ConvexError("Unauthorized");
 
+    if (!args.email.trim()) throw new ConvexError("Email cannot be empty");
     if (args.email === identity.email) throw new ConvexError("Can't send a request to yourself");
 
     const currentUser = await getUserByClerkId(ctx, identity.subject);
@@ -71,6 +72,145 @@ export const create = mutation({
       .unique();
 
     if (!receiver) throw new ConvexError("User could not be found");
+
+    // Check if a request already exists from current user to receiver
+    const requestAlreadySent = await ctx.db
+      .query("requests")
+      .withIndex("by_senderId_receiverId", (q) =>
+        q.eq("senderId", currentUser._id).eq("receiverId", receiver._id))
+      .unique();
+
+    if (requestAlreadySent) throw new ConvexError("Request already sent");
+
+    // Check if a request already exists from receiver to current user
+    const requestAlreadyReceived = await ctx.db
+      .query("requests")
+      .withIndex("by_senderId_receiverId", (q) =>
+        q.eq("senderId", receiver._id).eq("receiverId", currentUser._id))
+      .unique();
+
+    if (requestAlreadyReceived) {
+      throw new ConvexError("This user has already sent you a request");
+    }
+
+    // Check if they are already friends (either direction)
+    const existingFriendship1 = await ctx.db
+      .query("friendships")
+      .withIndex("by_userIds", (q) =>
+        q.eq("userId1", currentUser._id).eq("userId2", receiver._id))
+      .unique();
+
+    const existingFriendship2 = await ctx.db
+      .query("friendships")
+      .withIndex("by_userIds", (q) =>
+        q.eq("userId1", receiver._id).eq("userId2", currentUser._id))
+      .unique();
+
+    if (existingFriendship1 || existingFriendship2) {
+      throw new ConvexError("You are already friends with this user");
+    }
+
+    // Create the request
+    const request = await ctx.db.insert("requests", {
+      senderId: currentUser._id,
+      receiverId: receiver._id,
+      status: "pending"
+    });
+
+    return request;
+  },
+});
+
+export const createByUsername = mutation({
+  args: { username: v.string() },
+  handler: async (ctx, args) => {
+    const identity = await ctx.auth.getUserIdentity();
+    if (!identity) throw new ConvexError("Unauthorized");
+
+    const currentUser = await getUserByClerkId(ctx, identity.subject);
+    if (!currentUser) throw new ConvexError("User not found");
+
+    if (!args.username.trim()) throw new ConvexError("Username cannot be empty");
+
+    // Basic validation for username
+    const usernameRegex = /^[a-zA-Z0-9_.-]+$/;
+    if (!usernameRegex.test(args.username)) {
+      throw new ConvexError("Username can only contain letters, numbers, underscores, periods, and hyphens");
+    }
+
+    // Function to get clean username without emojis
+    const getCleanUsername = (text: string) => {
+      // Special case for shield emoji which might have different encodings
+      let result = text;
+
+      // Handle the shield emoji specifically since it might be encoded differently
+      result = result.replace(/🛡️/gu, ''); // With variation selector
+      result = result.replace(/🛡/gu, '');  // Without variation selector
+
+      // Then remove any other emojis
+      result = result.replace(/[\u{1F600}-\u{1F6FF}]|[\u{2600}-\u{26FF}]|[\u{2700}-\u{27BF}]|[\u{1F900}-\u{1F9FF}]|[\u{1F300}-\u{1F5FF}]|[\u{1F680}-\u{1F6FF}]|[\u{1F1E0}-\u{1F1FF}]/gu, '');
+
+      return result.trim();
+    };
+
+    // Check if trying to add yourself with or without emojis
+    const cleanCurrentUsername = getCleanUsername(currentUser.username);
+    if (currentUser.username === args.username || cleanCurrentUsername === args.username) {
+      throw new ConvexError("Can't send a request to yourself");
+    }
+
+    // First try exact match
+    let receiver = await ctx.db
+      .query("users")
+      .withIndex("by_username", (q) => q.eq("username", args.username))
+      .unique();
+
+    // If no exact match, try to find a user with emojis in their username
+    if (!receiver) {
+      console.log("No exact match found for username:", args.username);
+
+      // Get all users
+      const allUsers = await ctx.db.query("users").collect();
+      console.log("Total users to check:", allUsers.length);
+
+      // For debugging - log all usernames 
+      console.log("All usernames:", allUsers.map(u => ({
+        original: u.username,
+        cleaned: getCleanUsername(u.username)
+      })));
+
+      // Find a user whose username contains the requested username
+      // This will match usernames with emojis like "john🛡️" when searching for "john"
+      const foundUser = allUsers.find(user => {
+        // Special case for username that ends with shield emoji
+        if (user.username === args.username + "🛡️" || user.username === args.username + "🛡") {
+          console.log("Direct match with shield:", user.username);
+          return true;
+        }
+
+        // Get clean username without emojis
+        const cleanUsername = getCleanUsername(user.username);
+        const isMatch = cleanUsername === args.username;
+
+        if (user.username.includes("🛡️")) {
+          console.log("Found user with shield:", user.username);
+          console.log("Clean username:", cleanUsername);
+          console.log("Input username:", args.username);
+          console.log("Is match:", isMatch);
+        }
+
+        return isMatch;
+      });
+
+      if (foundUser) {
+        console.log("Found matching user:", foundUser.username);
+        receiver = foundUser;
+      } else {
+        console.log("No matching user found after cleaning usernames");
+      }
+    }
+
+    if (!receiver) throw new ConvexError("User with this username could not be found");
 
     // Check if a request already exists from current user to receiver
     const requestAlreadySent = await ctx.db

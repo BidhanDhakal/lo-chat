@@ -16,20 +16,34 @@ interface AddFriendDialogProps {
 
 const AddFriendDialog = ({ children }: AddFriendDialogProps) => {
   const [open, setOpen] = React.useState(false);
-  const [email, setEmail] = React.useState("");
+  const [inputValue, setInputValue] = React.useState("");
   const [isSubmitting, setIsSubmitting] = React.useState(false);
 
-  const createRequest = useMutation(api.request.create);
+  const createRequestByEmail = useMutation(api.request.create);
+  const createRequestByUsername = useMutation(api.request.createByUsername);
+
+  const isEmail = (value: string) => {
+    // Basic email validation
+    return /\S+@\S+\.\S+/.test(value);
+  };
 
   const onSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
 
-    if (!email) return;
+    if (!inputValue.trim()) return;
 
     try {
       setIsSubmitting(true);
-      await createRequest({ email });
-      setEmail("");
+
+      if (isEmail(inputValue)) {
+        // Send request by email
+        await createRequestByEmail({ email: inputValue });
+      } else {
+        // Send request by username
+        await createRequestByUsername({ username: inputValue });
+      }
+
+      setInputValue("");
       toast.success("Friend request sent successfully");
       setOpen(false);
     } catch (error) {
@@ -58,11 +72,14 @@ const AddFriendDialog = ({ children }: AddFriendDialogProps) => {
         <form onSubmit={onSubmit}>
           <div className="py-4">
             <Input
-              placeholder="Email"
-              value={email}
-              onChange={(e) => setEmail(e.target.value)}
+              placeholder="Email address or username"
+              value={inputValue}
+              onChange={(e) => setInputValue(e.target.value)}
               disabled={isSubmitting}
             />
+            <p className="text-xs text-muted-foreground mt-2">
+              Enter an email address or username to send a friend request
+            </p>
           </div>
           <DialogFooter>
             <Button

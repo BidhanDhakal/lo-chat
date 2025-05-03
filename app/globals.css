@@ -76,6 +76,25 @@ body {
   body {
     @apply bg-background text-foreground;
   }
+
+  /* Remove outline on all inputs, textareas, and other input elements when focused */
+  input:focus,
+  textarea:focus,
+  select:focus,
+  button:focus,
+  [contenteditable]:focus {
+    @apply outline-none focus-visible:ring-0 focus-visible:ring-offset-0;
+  }
+
+  /* Remove ring from all shadcn components */
+  .focus-visible:ring-offset-0,
+  .focus-visible:ring-0 {
+    --tw-ring-offset-width: 0px !important;
+    --tw-ring-offset-color: transparent !important;
+    --tw-ring-color: transparent !important;
+    --tw-ring-offset-shadow: none !important;
+    --tw-ring-shadow: none !important;
+  }
 }
 
 

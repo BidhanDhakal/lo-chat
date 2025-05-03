@@ -29,14 +29,14 @@ const FriendsPage = () => {
 
   if (requests === undefined) {
     return (
-      <div className="flex flex-col flex-1 justify-center items-center">
+      <div className="flex flex-col flex-1 justify-center items-center lg:ml-16">
         <Loader2 className="h-7 w-7 text-muted-foreground animate-spin" />
       </div>
     );
   }
 
   return (
-    <div className="flex flex-col flex-1 p-4 space-y-6">
+    <div className="flex flex-col flex-1 p-4 space-y-6 lg:ml-16">
       <div className="flex items-center justify-between">
         <h1 className="text-2xl font-bold">Friend Requests</h1>
         <AddFriendDialog>

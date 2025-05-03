@@ -245,7 +245,7 @@ const ChatInput = () => {
 
     if (isVerified) {
       return (
-        <div ref={emojiPickerRef} className="absolute bottom-full right-0 mb-2">
+        <div ref={emojiPickerRef} className="absolute bottom-full right-0 mb-2 z-10">
           <EmojiPicker
             onEmojiClick={handleEmojiSelect}
             width={300}
@@ -260,7 +260,7 @@ const ChatInput = () => {
     }
 
     return (
-      <div ref={emojiPickerRef} className="absolute bottom-full right-0 mb-2 bg-background border rounded-lg shadow-lg p-2 w-64 max-h-[300px] overflow-y-auto">
+      <div ref={emojiPickerRef} className="absolute bottom-full right-0 mb-2 bg-background border rounded-lg shadow-lg p-2 w-64 max-h-[300px] overflow-y-auto z-10">
         <div className="grid grid-cols-8 gap-1">
           {commonEmojis.map((emoji, index) => (
             <button
@@ -298,45 +298,45 @@ const ChatInput = () => {
           disabled={isUploadingDoc}
         />
 
-        <div className="flex-shrink-0 flex items-center justify-center mb-1">
-          <DropdownMenu>
-            <DropdownMenuTrigger asChild>
-              <Button
-                size="icon"
-                variant="ghost"
-                disabled={isUploadingImage || isUploadingDoc || isSubmitting}
-                className="text-muted-foreground hover:text-foreground h-9 w-9 rounded-full hover:bg-muted/50 transition-colors"
-              >
-                {isUploadingImage || isUploadingDoc ? (
-                  <div className="flex flex-col items-center">
-                    <Loader2 className="h-4 w-4 animate-spin" />
-                    <span className="text-[10px] mt-0.5">{Math.round(uploadProgress)}%</span>
-                  </div>
-                ) : (
-                  <Plus className="h-4 w-4" />
-                )}
-              </Button>
-            </DropdownMenuTrigger>
-            <DropdownMenuContent align="start" className="w-48">
-              <DropdownMenuItem
-                onClick={handleImageClick}
-                className="flex items-center gap-2 cursor-pointer hover:bg-muted/50"
-              >
-                <Image className="h-4 w-4" />
-                <span>Photo</span>
-              </DropdownMenuItem>
-              <DropdownMenuItem
-                onClick={handleDocClick}
-                className="flex items-center gap-2 cursor-pointer hover:bg-muted/50"
-              >
-                <FileText className="h-4 w-4" />
-                <span>Document</span>
-              </DropdownMenuItem>
-            </DropdownMenuContent>
-          </DropdownMenu>
-        </div>
-
         <div className="flex-1 relative flex items-center">
+          <div className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground z-10">
+            <DropdownMenu>
+              <DropdownMenuTrigger asChild>
+                <Button
+                  size="icon"
+                  variant="ghost"
+                  disabled={isUploadingImage || isUploadingDoc || isSubmitting}
+                  className="h-6 w-6 p-0 transition-colors hover:text-foreground"
+                >
+                  {isUploadingImage || isUploadingDoc ? (
+                    <div className="flex flex-col items-center">
+                      <Loader2 className="h-4 w-4 animate-spin" />
+                      <span className="text-[10px] mt-0.5">{Math.round(uploadProgress)}%</span>
+                    </div>
+                  ) : (
+                    <Plus className="h-4 w-4" />
+                  )}
+                </Button>
+              </DropdownMenuTrigger>
+              <DropdownMenuContent align="start" className="w-48">
+                <DropdownMenuItem
+                  onClick={handleImageClick}
+                  className="flex items-center gap-2 cursor-pointer hover:bg-muted/50"
+                >
+                  <Image className="h-4 w-4" />
+                  <span>Photo</span>
+                </DropdownMenuItem>
+                <DropdownMenuItem
+                  onClick={handleDocClick}
+                  className="flex items-center gap-2 cursor-pointer hover:bg-muted/50"
+                >
+                  <FileText className="h-4 w-4" />
+                  <span>Document</span>
+                </DropdownMenuItem>
+              </DropdownMenuContent>
+            </DropdownMenu>
+          </div>
+
           <Textarea
             ref={textareaRef}
             value={content}
@@ -344,7 +344,7 @@ const ChatInput = () => {
             onKeyDown={onKeyDown}
             placeholder="Type a message..."
             rows={1}
-            className="resize-none min-h-[44px] max-h-[150px] py-3 px-4 pr-20 overflow-y-auto rounded-2xl bg-muted/50 border-none focus-visible:ring-1 focus-visible:ring-ring"
+            className="resize-none min-h-[44px] max-h-[150px] py-3 pl-10 pr-20 overflow-y-auto rounded-full bg-muted/50 border-none focus-visible:ring-0 focus-visible:ring-offset-0 focus:outline-none"
             disabled={isSubmitting || isUploadingImage || isUploadingDoc}
           />
           <div className="absolute right-2 bottom-1.5 flex items-center gap-1">
@@ -358,7 +358,6 @@ const ChatInput = () => {
               >
                 <Smile className="h-4 w-4" />
               </Button>
-
               {renderEmojiPicker()}
             </div>
             <Button
