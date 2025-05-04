@@ -189,7 +189,7 @@ const Message = ({
     )}>
       <div className="flex items-end max-w-[85%] gap-1">
         {!fromCurrentUser && !lastByUser && (
-          <Avatar className="h-6 w-6">
+          <Avatar className="h-6 w-6 mt-6">
             <AvatarImage src={senderImage} className="object-cover" />
             <AvatarFallback>{displaySenderName.charAt(0).toUpperCase()}</AvatarFallback>
           </Avatar>
@@ -201,14 +201,16 @@ const Message = ({
 
         <div>
           {!fromCurrentUser && isFirstInSequence && (
-            <div className="text-xs text-muted-foreground mb-[2px] ml-1">
+            <div className="text-xs font-medium text-muted-foreground mb-[2px] ml-1">
               {displaySenderName}
             </div>
           )}
 
           <div className={cn(
             type !== 'image' && "rounded-lg px-3 py-[6px]",
-            type !== 'image' && (fromCurrentUser ? "bg-primary text-primary-foreground" : "bg-muted")
+            type !== 'image' && (fromCurrentUser
+              ? "bg-primary text-primary-foreground shadow-sm rounded-br-none"
+              : "bg-muted shadow-sm rounded-bl-none")
           )}>
             {type === 'text' && (
               <p className="whitespace-pre-wrap">
@@ -231,7 +233,7 @@ const Message = ({
                     <img
                       src={imageUrl}
                       alt="Image message"
-                      className="max-h-[200px] max-w-[250px] object-contain cursor-pointer hover:opacity-90 transition rounded-2xl"
+                      className="max-h-[200px] max-w-[250px] object-contain cursor-pointer hover:opacity-90 transition rounded-lg shadow-sm"
                       onLoad={() => setIsLoading(false)}
                       onClick={() => setIsImagePopupOpen(true)}
                     />
@@ -255,7 +257,7 @@ const Message = ({
 
             {type === 'document' && documentInfo && (
               <div
-                className="flex items-center gap-2 p-2 bg-background/50 rounded-lg cursor-pointer hover:bg-background/70 transition group"
+                className="flex items-center gap-2 p-2 bg-background/50 rounded-lg cursor-pointer hover:bg-background/70 transition group shadow-sm"
                 onClick={(e) => documentUrl && handleDownload(e, documentUrl, documentInfo.fileName)}
               >
                 <div className="flex items-center gap-2 flex-1 min-w-0">
@@ -266,14 +268,14 @@ const Message = ({
               </div>
             )}
 
-            <p className="text-xs opacity-50 mt-[2px] text-right">
+            <p className="text-xs opacity-60 mt-[2px] text-right">
               {format(createdAt, 'p')}
             </p>
           </div>
         </div>
 
         {fromCurrentUser && !lastByUser && (
-          <Avatar className="h-6 w-6">
+          <Avatar className="h-6 w-6 mt-6">
             <AvatarImage src={senderImage} className="object-cover" />
             <AvatarFallback>{displaySenderName.charAt(0).toUpperCase()}</AvatarFallback>
           </Avatar>
