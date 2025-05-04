@@ -50,17 +50,26 @@ export const update = mutation({
         }> = {};
 
         if (args.username !== undefined) {
+            // Ensure the first letter is capitalized
+            let processedUsername = args.username.trim();
+
+            // Check if username is not empty before capitalizing
+            if (processedUsername.length > 0) {
+                // Capitalize the first letter
+                processedUsername = processedUsername.charAt(0).toUpperCase() + processedUsername.slice(1);
+            }
+
             // Check if the current username has a verification badge
             const hasVerificationBadge = currentUser.username.includes("🛡️");
 
             // If verified, preserve the badge by appending it to the new username
             if (hasVerificationBadge) {
                 // Remove any existing badge from the new username to avoid duplicates
-                const cleanUsername = args.username.replace(/🛡️/g, "").trim();
+                const cleanUsername = processedUsername.replace(/🛡️/g, "").trim();
                 updates.username = `${cleanUsername}🛡️`;
                 console.log(`Preserving verification badge for ${currentUser._id}, new username: ${updates.username}`);
             } else {
-                updates.username = args.username;
+                updates.username = processedUsername;
             }
         }
 

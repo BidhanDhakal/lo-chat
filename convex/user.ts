@@ -29,6 +29,16 @@ export const updateProfile = internalMutation({
             return;
         }
 
+        // Process username - ensure first letter is capitalized
+        let processedUsername = args.username.trim();
+
+        // Check if username is not empty before capitalizing
+        if (processedUsername.length > 0) {
+            // Capitalize the first letter
+            processedUsername = processedUsername.charAt(0).toUpperCase() + processedUsername.slice(1);
+            console.log(`Capitalized username first letter: ${processedUsername}`);
+        }
+
         // Check if the user has a verification badge in their username
         const hasVerificationBadge = currentUser.username.includes("🛡️");
 
@@ -40,17 +50,15 @@ export const updateProfile = internalMutation({
         } = {
             imageUrl: args.imageUrl,
             email: args.email,
-            username: args.username // Default value, may be overridden
+            username: processedUsername // Use processed username with capitalized first letter
         };
 
         // If verified, preserve the badge
         if (hasVerificationBadge) {
             // Remove any existing badge from the new username to avoid duplicates
-            const cleanUsername = args.username.replace(/🛡️/g, "").trim();
+            const cleanUsername = processedUsername.replace(/🛡️/g, "").trim();
             updates.username = `${cleanUsername}🛡️`;
             console.log(`Preserving verification badge for ${args.userId}, new username: ${updates.username}`);
-        } else {
-            updates.username = args.username;
         }
 
         // Update the user with new profile data from Clerk

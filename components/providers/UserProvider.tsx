@@ -64,8 +64,14 @@ export const UserProvider = ({ children }: { children: React.ReactNode }) => {
                         }
 
                         if (usernameChanged) {
-                            updates.username = currentUsername;
-                            console.log(`Updating username: ${currentUsername}`);
+                            // Ensure the username first letter is capitalized
+                            let processedUsername = currentUsername;
+                            if (processedUsername.length > 0) {
+                                processedUsername = processedUsername.charAt(0).toUpperCase() + processedUsername.slice(1);
+                            }
+
+                            updates.username = processedUsername;
+                            console.log(`Updating username: ${processedUsername}`);
                         }
 
                         await updateUser(updates);
