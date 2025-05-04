@@ -9,6 +9,7 @@ import React, { useEffect, useState } from 'react';
 import EmojiParser from '@/components/ui/emoji-parser';
 import { api } from '@/convex/_generated/api';
 import { useMutation } from 'convex/react';
+import ProfileImagePopup from '@/components/ProfileImagePopup';
 
 type Props = {
     imageUrl?: string;
@@ -22,6 +23,7 @@ type Props = {
 
 const Header = ({ imageUrl, name, options }: Props) => {
     const [finalImageUrl, setFinalImageUrl] = useState<string | undefined>(imageUrl);
+    const [isProfileImageOpen, setIsProfileImageOpen] = useState(false);
     const getUrl = useMutation(api.files.getUrl);
 
     // Check if this is a Convex Storage ID and get the URL if needed
@@ -42,11 +44,17 @@ const Header = ({ imageUrl, name, options }: Props) => {
         loadConvexImage();
     }, [imageUrl, getUrl]);
 
+    // Filter out any shield emoji for display in popup
+    const displayName = name.replace(/🛡️/g, '');
+
     return (
         <Card className="w-full flex roulded-lg items-center p-2 justify-between">
             <div className='flex items-center gap-2'>
                 <Link href="/conversations" className="block lg:hidden"><CircleArrowLeft /></Link>
-                <Avatar className='h-8 w-8'>
+                <Avatar
+                    className='h-8 w-8 cursor-pointer hover:opacity-80 transition'
+                    onClick={() => finalImageUrl && setIsProfileImageOpen(true)}
+                >
                     <AvatarImage src={finalImageUrl} className="object-cover" />
                     <AvatarFallback>{name.substring(0, 1)}</AvatarFallback>
                 </Avatar>
@@ -72,6 +80,15 @@ const Header = ({ imageUrl, name, options }: Props) => {
                     </DropdownMenuContent>
                 </DropdownMenu> : null}
             </div>
+
+            {finalImageUrl && isProfileImageOpen && (
+                <ProfileImagePopup
+                    imageUrl={finalImageUrl}
+                    username={displayName}
+                    isOpen={isProfileImageOpen}
+                    onClose={() => setIsProfileImageOpen(false)}
+                />
+            )}
         </Card>
     )
 }
