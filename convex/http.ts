@@ -29,31 +29,56 @@ const handleClerkWebhook = httpAction(async (ctx, req) => {
     if (!event) {
         return new Response("Webhook verification failed", { status: 400 });
     }
+
     switch (event.type) {
         case "user.created":
-            const user = await ctx.runQuery(internal.user.get, {
+        case "user.updated": {
+            console.log(`${event.type} event received for user ${event.data.id}`);
+
+            // Find existing user
+            const existingUser = await ctx.runQuery(internal.user.get, {
                 clerkId: event.data.id
             });
-            if (user) {
-                console.log(`updating user ${event.data.id} with: ${event.data}`);
+
+            // Get profile data from Clerk
+            const email = event.data.email_addresses?.[0]?.email_address || "";
+            const imageUrl = event.data.image_url || "";
+            const firstName = event.data.first_name || "";
+            const lastName = event.data.last_name || "";
+            const username = `${firstName} ${lastName}`.trim() || event.data.username || "User";
+
+            if (existingUser) {
+                // Log the update operation
+                console.log(`Updating existing user ${event.data.id} in database`);
+                console.log(`- New image URL: ${imageUrl}`);
+                console.log(`- New username: ${username}`);
+
+                // Update existing user with new data from Clerk
+                await ctx.runMutation(internal.user.updateProfile, {
+                    userId: existingUser._id,
+                    username: username,
+                    imageUrl: imageUrl,
+                    email: email
+                });
+            } else {
+                // Create new user
+                console.log(`Creating new user ${event.data.id} in database`);
+
+                await ctx.runMutation(internal.user.crate, {
+                    clerkId: event.data.id,
+                    email: email,
+                    imageUrl: imageUrl,
+                    username: username
+                });
             }
-        case "user.updated": {
-
-            console.log("Creating/Updating User:", event.data.id);
-
-            await ctx.runMutation(internal.user.crate, {
-                clerkId: event.data.id,
-                email: event.data.email_addresses[0].email_address,
-                imageUrl: event.data.image_url,
-                username: `${event.data.first_name} ${event.data.last_name}`
-            });
             break;
         }
         default: {
             console.log("Unhandled event type:", event.type);
         }
     }
-    return new Response(null, { status: 200, });
+
+    return new Response(null, { status: 200 });
 });
 
 const http = httpRouter();

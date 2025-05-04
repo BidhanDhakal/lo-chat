@@ -24,8 +24,8 @@ export const useNavigation = () => {
             count: requestsCount,
         },
     ],
-    [pathname, requestsCount]
-);
-return paths;
+        [pathname, requestsCount]
+    );
+    return paths;
 };
 

@@ -139,35 +139,32 @@ const Message = ({
         );
       }
 
-      // Get the matched URL
       let url = match[0];
       let displayUrl = url;
 
-      // Add https:// prefix if needed
       if (url.startsWith('www.')) {
         url = 'https://' + url;
       } else if (!url.startsWith('http://') && !url.startsWith('https://') && !url.startsWith('ftp://')) {
-        // Check if it's a domain with a TLD
+
         if (url.match(/[^\s]+\.(com|org|net|edu|gov|mil|io|co|me|app|dev)/)) {
           url = 'https://' + url;
         }
       }
 
-      // Add the link
       result.push(
         <a
           key={`link-${match.index}`}
           href={url}
           target="_blank"
           rel="noopener noreferrer"
-          className="text-blue-500 underline hover:text-blue-700"
+          className="text-blue-900 dark:text-white underline hover:text-blue-900 font-medium"
           onClick={(e) => e.stopPropagation()}
         >
           {displayUrl}
         </a>
       );
 
-      // Update the last index
+
       lastIndex = match.index + match[0].length;
     }
 

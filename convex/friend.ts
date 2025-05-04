@@ -57,7 +57,7 @@ export const remove = mutation({
 
         console.log(`Removing friendship between ${currentUser._id} and ${otherUser._id}`);
 
-        // Delete only the specific friendship between these two users
+        // Delete the friendship between these two users
         const friendship = await ctx.db
             .query("friendships")
             .withIndex("by_userIds", (q) =>
@@ -85,14 +85,64 @@ export const remove = mutation({
             console.log(`Deleted reverse friendship ${reverseFriendship._id}`);
         }
 
-        // Delete only this specific conversation and its memberships
-        for (const membership of conversationMemberships) {
-            await ctx.db.delete(membership._id);
-            console.log(`Deleted conversation membership ${membership._id}`);
+        // Find ALL conversations between these two users
+        const userMemberships = await ctx.db
+            .query("conversationMembers")
+            .withIndex("by_memberId", (q) => q.eq("memberId", currentUser._id))
+            .collect();
+
+        // Track which conversations involve both users
+        const sharedConversationIds = new Set<Id<"conversations">>();
+
+        // Find conversations where both users are members and aren't group chats
+        for (const userMembership of userMemberships) {
+            // Check if other user is also a member of this conversation
+            const isOtherUserMember = await ctx.db
+                .query("conversationMembers")
+                .withIndex("by_memberId_conversationId", (q) =>
+                    q.eq("memberId", otherUser._id)
+                        .eq("conversationId", userMembership.conversationId))
+                .first();
+
+            if (isOtherUserMember) {
+                // Check if this is a direct conversation (not a group)
+                const conv = await ctx.db.get(userMembership.conversationId);
+                if (conv && !conv.isGroup) {
+                    sharedConversationIds.add(userMembership.conversationId);
+                }
+            }
         }
 
-        await ctx.db.delete(args.conversationId);
-        console.log(`Deleted conversation ${args.conversationId}`);
+        console.log(`Found ${sharedConversationIds.size} shared conversations between users`);
+
+        // Delete all conversations and associated data between these users
+        for (const conversationId of sharedConversationIds) {
+            // Delete messages in this conversation
+            const messages = await ctx.db
+                .query("messages")
+                .withIndex("by_conversationId", (q) => q.eq("conversationId", conversationId))
+                .collect();
+
+            for (const message of messages) {
+                await ctx.db.delete(message._id);
+            }
+            console.log(`Deleted ${messages.length} messages from conversation ${conversationId}`);
+
+            // Delete conversation memberships
+            const memberships = await ctx.db
+                .query("conversationMembers")
+                .withIndex("by_conversationId", (q) => q.eq("conversationId", conversationId))
+                .collect();
+
+            for (const membership of memberships) {
+                await ctx.db.delete(membership._id);
+            }
+            console.log(`Deleted ${memberships.length} memberships from conversation ${conversationId}`);
+
+            // Delete the conversation itself
+            await ctx.db.delete(conversationId);
+            console.log(`Deleted conversation ${conversationId}`);
+        }
 
         // Check remaining friendships for this user
         const remainingFriendships = await ctx.db
