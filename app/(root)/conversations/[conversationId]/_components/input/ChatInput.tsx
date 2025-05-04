@@ -41,6 +41,9 @@ const ChatInput = () => {
   const [isEmojiPickerOpen, setIsEmojiPickerOpen] = React.useState(false);
   const [selectedImages, setSelectedImages] = useState<File[]>([]);
   const [uploadProgress, setUploadProgress] = useState<number>(0);
+  const [hasImageInClipboard, setHasImageInClipboard] = useState<boolean>(false);
+  const [isPasteMode, setIsPasteMode] = useState<boolean>(false);
+  const [isDraggingOver, setIsDraggingOver] = useState<boolean>(false);
 
   const textareaRef = React.useRef<HTMLTextAreaElement>(null);
   const imageInputRef = useRef<HTMLInputElement>(null);
@@ -67,6 +70,167 @@ const ChatInput = () => {
     }
   }, [content]);
 
+  // Check for images in clipboard on focus
+  const checkClipboardForImages = async () => {
+    try {
+      const items = await navigator.clipboard.read();
+      let hasImage = false;
+
+      for (const item of items) {
+        if (item.types.some(type => type.startsWith('image/'))) {
+          hasImage = true;
+          break;
+        }
+      }
+
+      setHasImageInClipboard(hasImage);
+    } catch (err) {
+      // Permission denied or other clipboard API errors
+      // We'll just not show the indicator
+      setHasImageInClipboard(false);
+    }
+  };
+
+  // Focus the textarea on mount
+  useEffect(() => {
+    if (textareaRef.current) {
+      textareaRef.current.focus();
+    }
+  }, []);
+
+  // Check clipboard on focus and key press
+  useEffect(() => {
+    const handleFocus = () => {
+      checkClipboardForImages();
+    };
+
+    const handleKeyDown = (e: KeyboardEvent) => {
+      // Detect Ctrl+V or Cmd+V combination
+      if ((e.ctrlKey || e.metaKey) && e.key === 'v') {
+        setIsPasteMode(true);
+        // Reset paste mode after a short delay
+        setTimeout(() => setIsPasteMode(false), 1000);
+      }
+    };
+
+    window.addEventListener('keydown', handleKeyDown);
+    if (textareaRef.current) {
+      textareaRef.current.addEventListener('focus', handleFocus);
+    }
+
+    return () => {
+      window.removeEventListener('keydown', handleKeyDown);
+      if (textareaRef.current) {
+        textareaRef.current.removeEventListener('focus', handleFocus);
+      }
+    };
+  }, []);
+
+  // Add clipboard paste handler for images
+  useEffect(() => {
+    const handlePaste = async (e: ClipboardEvent) => {
+      // Only process paste when textarea is focused
+      if (document.activeElement !== textareaRef.current) {
+        return;
+      }
+
+      if (e.clipboardData && e.clipboardData.items) {
+        const items = e.clipboardData.items;
+        let hasProcessedImage = false;
+
+        for (let i = 0; i < items.length; i++) {
+          if (items[i].type.indexOf('image') !== -1) {
+            e.preventDefault();
+            hasProcessedImage = true;
+
+            const file = items[i].getAsFile();
+            if (!file) continue;
+
+            const MAX_FILE_SIZE = 25 * 1024 * 1024;
+            if (file.size > MAX_FILE_SIZE) {
+              toast.error("Image size should be less than 25MB");
+              return;
+            }
+
+            setIsUploadingImage(true);
+            setUploadProgress(0);
+
+            try {
+              toast.info("Processing pasted image...");
+
+              const uploadUrl = await generateUploadUrl();
+
+              // Use XMLHttpRequest for progress tracking
+              const xhr = new XMLHttpRequest();
+
+              // Setup progress tracking
+              xhr.upload.onprogress = (event) => {
+                if (event.lengthComputable) {
+                  const progress = Math.round((event.loaded / event.total) * 100);
+                  setUploadProgress(progress);
+                }
+              };
+
+              // Use promise to handle upload
+              const response = await new Promise<string>((resolve, reject) => {
+                xhr.open('POST', uploadUrl, true);
+                xhr.setRequestHeader('Content-Type', file.type);
+
+                xhr.onload = () => {
+                  if (xhr.status >= 200 && xhr.status < 300) {
+                    resolve(xhr.response);
+                  } else {
+                    reject(new Error(`Upload failed with status: ${xhr.status}`));
+                  }
+                };
+
+                xhr.onerror = () => reject(new Error('Network error during upload'));
+                xhr.send(file);
+              });
+
+              const { storageId } = JSON.parse(response);
+              await createMessage({
+                conversationId,
+                content: storageId,
+                type: "image"
+              });
+
+              toast.success("Image sent successfully");
+
+              // Check for images in clipboard again
+              setTimeout(() => {
+                checkClipboardForImages();
+              }, 500);
+            } catch (error) {
+              console.error("Error uploading pasted image:", error);
+              toast.error("Failed to upload pasted image");
+            } finally {
+              setIsUploadingImage(false);
+              setUploadProgress(0);
+            }
+
+            break;
+          }
+        }
+
+        // If no image was processed, check clipboard again
+        if (!hasProcessedImage) {
+          setTimeout(() => {
+            checkClipboardForImages();
+          }, 500);
+        }
+      }
+    };
+
+    // Add paste event listener to the document
+    document.addEventListener('paste', handlePaste);
+
+    // Clean up
+    return () => {
+      document.removeEventListener('paste', handlePaste);
+    };
+  }, [conversationId, createMessage, generateUploadUrl]);
+
   // Add click outside handler
   useEffect(() => {
     const handleClickOutside = (event: MouseEvent) => {
@@ -80,6 +244,113 @@ const ChatInput = () => {
       document.removeEventListener('mousedown', handleClickOutside);
     };
   }, []);
+
+  // Add drag and drop handler for images
+  useEffect(() => {
+    const handleDragOver = (e: DragEvent) => {
+      e.preventDefault();
+      setIsDraggingOver(true);
+    };
+
+    const handleDragLeave = (e: DragEvent) => {
+      e.preventDefault();
+      setIsDraggingOver(false);
+    };
+
+    const handleDrop = async (e: DragEvent) => {
+      e.preventDefault();
+      setIsDraggingOver(false);
+
+      if (e.dataTransfer?.files) {
+        const files = Array.from(e.dataTransfer.files);
+        const imageFiles = files.filter(file => file.type.startsWith('image/'));
+
+        if (imageFiles.length === 0) {
+          toast.error("Please drop image files only");
+          return;
+        }
+
+        const MAX_FILE_SIZE = 25 * 1024 * 1024;
+        const oversizedFiles = imageFiles.filter(file => file.size > MAX_FILE_SIZE);
+        if (oversizedFiles.length > 0) {
+          toast.error(`Some images exceed 25MB limit: ${oversizedFiles.map(f => f.name).join(', ')}`);
+          return;
+        }
+
+        setSelectedImages(imageFiles);
+        setIsUploadingImage(true);
+        setUploadProgress(0);
+
+        try {
+          const totalFiles = imageFiles.length;
+          let uploadedCount = 0;
+
+          for (const file of imageFiles) {
+            const uploadUrl = await generateUploadUrl();
+
+            // Use XMLHttpRequest for progress tracking
+            const xhr = new XMLHttpRequest();
+
+            // Setup progress tracking
+            xhr.upload.onprogress = (event) => {
+              if (event.lengthComputable) {
+                const progress = Math.round((event.loaded / event.total) * 100);
+                setUploadProgress(progress);
+              }
+            };
+
+            // Use promise to handle upload
+            const response = await new Promise<string>((resolve, reject) => {
+              xhr.open('POST', uploadUrl, true);
+              xhr.setRequestHeader('Content-Type', file.type);
+
+              xhr.onload = () => {
+                if (xhr.status >= 200 && xhr.status < 300) {
+                  resolve(xhr.response);
+                } else {
+                  reject(new Error(`Upload failed with status: ${xhr.status}`));
+                }
+              };
+
+              xhr.onerror = () => reject(new Error('Network error during upload'));
+              xhr.send(file);
+            });
+
+            const { storageId } = JSON.parse(response);
+            await createMessage({
+              conversationId,
+              content: storageId,
+              type: "image"
+            });
+
+            uploadedCount++;
+            setUploadProgress((uploadedCount / totalFiles) * 100);
+          }
+
+          toast.success(`Successfully sent ${imageFiles.length} image${imageFiles.length > 1 ? 's' : ''}`);
+          setSelectedImages([]);
+        } catch (error) {
+          console.error("Error uploading dropped images:", error);
+          toast.error("Failed to upload images");
+        } finally {
+          setIsUploadingImage(false);
+          setUploadProgress(0);
+        }
+      }
+    };
+
+    // Add drop event listeners to the document
+    document.addEventListener('dragover', handleDragOver);
+    document.addEventListener('dragleave', handleDragLeave);
+    document.addEventListener('drop', handleDrop);
+
+    // Clean up
+    return () => {
+      document.removeEventListener('dragover', handleDragOver);
+      document.removeEventListener('dragleave', handleDragLeave);
+      document.removeEventListener('drop', handleDrop);
+    };
+  }, [conversationId, createMessage, generateUploadUrl]);
 
   const onSubmit = async () => {
     if (!content.trim()) return;
@@ -144,18 +415,46 @@ const ChatInput = () => {
       let uploadedCount = 0;
 
       for (const file of imageFiles) {
+        toast.info(`Processing image ${uploadedCount + 1}/${totalFiles}...`);
         const uploadUrl = await generateUploadUrl();
-        const result = await fetch(uploadUrl, {
-          method: "POST",
-          headers: { "Content-Type": file.type },
-          body: file,
+
+        // Use XMLHttpRequest to track upload progress
+        const xhr = new XMLHttpRequest();
+
+        // Setup progress tracking
+        xhr.upload.onprogress = (event) => {
+          if (event.lengthComputable) {
+            const fileProgress = Math.round((event.loaded / event.total) * 100);
+            // Calculate overall progress across all files
+            const overallProgress = Math.round(
+              ((uploadedCount * 100) + fileProgress) / totalFiles
+            );
+            setUploadProgress(overallProgress);
+          }
+        };
+
+        // Process the upload with progress tracking
+        const storageId = await new Promise<string>((resolve, reject) => {
+          xhr.open('POST', uploadUrl, true);
+          xhr.setRequestHeader('Content-Type', file.type);
+
+          xhr.onload = () => {
+            if (xhr.status >= 200 && xhr.status < 300) {
+              try {
+                const response = JSON.parse(xhr.responseText);
+                resolve(response.storageId);
+              } catch (e) {
+                reject(new Error('Invalid response format'));
+              }
+            } else {
+              reject(new Error(`Upload failed with status: ${xhr.status}`));
+            }
+          };
+
+          xhr.onerror = () => reject(new Error('Network error during upload'));
+          xhr.send(file);
         });
 
-        if (!result.ok) {
-          throw new Error(`Upload failed with status: ${result.status}`);
-        }
-
-        const { storageId } = await result.json();
         await createMessage({
           conversationId,
           content: storageId,
@@ -191,20 +490,45 @@ const ChatInput = () => {
     }
 
     setIsUploadingDoc(true);
+    setUploadProgress(0);
 
     try {
+      toast.info(`Processing document: ${file.name}...`);
       const uploadUrl = await generateUploadUrl();
-      const result = await fetch(uploadUrl, {
-        method: "POST",
-        headers: { "Content-Type": file.type },
-        body: file,
+
+      // Use XMLHttpRequest to track upload progress
+      const xhr = new XMLHttpRequest();
+
+      // Setup progress tracking
+      xhr.upload.onprogress = (event) => {
+        if (event.lengthComputable) {
+          const progress = Math.round((event.loaded / event.total) * 100);
+          setUploadProgress(progress);
+        }
+      };
+
+      // Process the upload with progress tracking
+      const storageId = await new Promise<string>((resolve, reject) => {
+        xhr.open('POST', uploadUrl, true);
+        xhr.setRequestHeader('Content-Type', file.type);
+
+        xhr.onload = () => {
+          if (xhr.status >= 200 && xhr.status < 300) {
+            try {
+              const response = JSON.parse(xhr.responseText);
+              resolve(response.storageId);
+            } catch (e) {
+              reject(new Error('Invalid response format'));
+            }
+          } else {
+            reject(new Error(`Upload failed with status: ${xhr.status}`));
+          }
+        };
+
+        xhr.onerror = () => reject(new Error('Network error during upload'));
+        xhr.send(file);
       });
 
-      if (!result.ok) {
-        throw new Error(`Upload failed with status: ${result.status}`);
-      }
-
-      const { storageId } = await result.json();
       await createMessage({
         conversationId,
         content: JSON.stringify({
@@ -224,6 +548,7 @@ const ChatInput = () => {
       toast.error("Failed to upload document");
     } finally {
       setIsUploadingDoc(false);
+      setUploadProgress(0);
     }
   };
 
@@ -277,100 +602,114 @@ const ChatInput = () => {
   };
 
   return (
-    <div className="p-4 bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60 fixed bottom-2 left-0 w-full z-20 md:static md:z-auto md:bottom-0 md:border-t">
-      <div className="flex items-end gap-x-2">
-        {/* Hidden file inputs */}
-        <input
-          type="file"
-          ref={imageInputRef}
-          className="hidden"
-          accept="image/*"
-          onChange={handleImageUpload}
-          disabled={isUploadingImage}
-          multiple
-        />
-        <input
-          type="file"
-          ref={docInputRef}
-          className="hidden"
-          accept=".pdf,.doc,.docx,.txt"
-          onChange={handleDocUpload}
-          disabled={isUploadingDoc}
-        />
+    <div
+      className={`p-4 bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60 fixed bottom-2 left-0 w-full z-20 md:static md:z-auto md:bottom-0 md:border-t ${isDraggingOver ? 'ring-2 ring-primary' : ''}`}
+    >
+      <div className="flex flex-col items-center">
+        <div className="flex items-end gap-x-2 w-full">
+          {/* Hidden file inputs */}
+          <input
+            type="file"
+            ref={imageInputRef}
+            className="hidden"
+            accept="image/*"
+            onChange={handleImageUpload}
+            disabled={isUploadingImage}
+            multiple
+          />
+          <input
+            type="file"
+            ref={docInputRef}
+            className="hidden"
+            accept=".pdf,.doc,.docx,.txt"
+            onChange={handleDocUpload}
+            disabled={isUploadingDoc}
+          />
 
-        <div className="flex-1 relative flex items-center">
-          <div className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground z-10">
-            <DropdownMenu>
-              <DropdownMenuTrigger asChild>
+          <div className="flex-1 relative flex items-center">
+            <div className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground z-10">
+              <DropdownMenu>
+                <DropdownMenuTrigger asChild>
+                  <Button
+                    size="icon"
+                    variant="ghost"
+                    disabled={isUploadingImage || isUploadingDoc || isSubmitting}
+                    className="h-6 w-6 p-0 transition-colors hover:text-foreground"
+                  >
+                    {isUploadingImage || isUploadingDoc ? (
+                      <div className="flex flex-col items-center">
+                        <Loader2 className="h-4 w-4 animate-spin" />
+                        <span className="text-[10px] mt-0.5">{Math.round(uploadProgress)}%</span>
+                      </div>
+                    ) : (
+                      <Plus className="h-5 w-5" />
+                    )}
+                  </Button>
+                </DropdownMenuTrigger>
+                <DropdownMenuContent align="start" className="w-48">
+                  <DropdownMenuItem
+                    onClick={handleImageClick}
+                    className="flex items-center gap-2 cursor-pointer hover:bg-muted/50"
+                  >
+                    <Image className="h-4 w-4" />
+                    <span>Photo</span>
+                  </DropdownMenuItem>
+                  <DropdownMenuItem
+                    onClick={handleDocClick}
+                    className="flex items-center gap-2 cursor-pointer hover:bg-muted/50"
+                  >
+                    <FileText className="h-4 w-4" />
+                    <span>Document</span>
+                  </DropdownMenuItem>
+                </DropdownMenuContent>
+              </DropdownMenu>
+            </div>
+
+            <div className={`relative flex-1 ${isPasteMode ? 'animate-pulse' : ''}`}>
+              <Textarea
+                ref={textareaRef}
+                value={content}
+                onChange={(e) => setContent(e.target.value)}
+                onKeyDown={onKeyDown}
+                placeholder="Message..."
+                rows={1}
+                className={`resize-none min-h-[44px] max-h-[150px] py-3 pl-10 pr-20 overflow-y-auto rounded-full bg-muted/50 border-none focus-visible:ring-0 focus-visible:ring-offset-0 focus:outline-none`}
+                disabled={isSubmitting || isUploadingImage || isUploadingDoc}
+              />
+            </div>
+
+            <div className="absolute right-2 bottom-1.5 flex items-center gap-1">
+              <div className="relative">
                 <Button
                   size="icon"
                   variant="ghost"
-                  disabled={isUploadingImage || isUploadingDoc || isSubmitting}
-                  className="h-6 w-6 p-0 transition-colors hover:text-foreground"
+                  className="text-muted-foreground hover:text-foreground h-9 w-9 rounded-full hover:bg-muted/50 transition-colors"
+                  disabled={isSubmitting || isUploadingImage || isUploadingDoc}
+                  onClick={() => setIsEmojiPickerOpen(!isEmojiPickerOpen)}
                 >
-                  {isUploadingImage || isUploadingDoc ? (
-                    <div className="flex flex-col items-center">
-                      <Loader2 className="h-4 w-4 animate-spin" />
-                      <span className="text-[10px] mt-0.5">{Math.round(uploadProgress)}%</span>
-                    </div>
-                  ) : (
-                    <Plus className="h-5 w-5" />
-                  )}
+                  <Smile className="h-5 w-5" />
                 </Button>
-              </DropdownMenuTrigger>
-              <DropdownMenuContent align="start" className="w-48">
-                <DropdownMenuItem
-                  onClick={handleImageClick}
-                  className="flex items-center gap-2 cursor-pointer hover:bg-muted/50"
-                >
-                  <Image className="h-4 w-4" />
-                  <span>Photo</span>
-                </DropdownMenuItem>
-                <DropdownMenuItem
-                  onClick={handleDocClick}
-                  className="flex items-center gap-2 cursor-pointer hover:bg-muted/50"
-                >
-                  <FileText className="h-4 w-4" />
-                  <span>Document</span>
-                </DropdownMenuItem>
-              </DropdownMenuContent>
-            </DropdownMenu>
-          </div>
-
-          <Textarea
-            ref={textareaRef}
-            value={content}
-            onChange={(e) => setContent(e.target.value)}
-            onKeyDown={onKeyDown}
-            placeholder="Message..."
-            rows={1}
-            className="resize-none min-h-[44px] max-h-[150px] py-3 pl-10 pr-20 overflow-y-auto rounded-full bg-muted/50 border-none focus-visible:ring-0 focus-visible:ring-offset-0 focus:outline-none"
-            disabled={isSubmitting || isUploadingImage || isUploadingDoc}
-          />
-          <div className="absolute right-2 bottom-1.5 flex items-center gap-1">
-            <div className="relative">
+                {renderEmojiPicker()}
+              </div>
               <Button
                 size="icon"
-                variant="ghost"
-                className="text-muted-foreground hover:text-foreground h-9 w-9 rounded-full hover:bg-muted/50 transition-colors"
-                disabled={isSubmitting || isUploadingImage || isUploadingDoc}
-                onClick={() => setIsEmojiPickerOpen(!isEmojiPickerOpen)}
+                onClick={onSubmit}
+                disabled={(!content.trim() && !isUploadingImage && !isUploadingDoc) || isSubmitting || isUploadingImage || isUploadingDoc}
+                className="text-primary bg-primary/10 hover:bg-primary/20 h-9 w-9 rounded-full transition-all duration-200 hover:scale-110 hover:shadow-md disabled:opacity-50 disabled:hover:scale-100 disabled:hover:shadow-none disabled:cursor-not-allowed"
               >
-                <Smile className="h-5 w-5" />
+                <Send className="h-5 w-5 transition-transform duration-200 group-hover:translate-x-0.5" />
               </Button>
-              {renderEmojiPicker()}
             </div>
-            <Button
-              size="icon"
-              onClick={onSubmit}
-              disabled={(!content.trim() && !isUploadingImage && !isUploadingDoc) || isSubmitting || isUploadingImage || isUploadingDoc}
-              className="text-primary bg-primary/10 hover:bg-primary/20 h-9 w-9 rounded-full transition-all duration-200 hover:scale-110 hover:shadow-md disabled:opacity-50 disabled:hover:scale-100 disabled:hover:shadow-none disabled:cursor-not-allowed"
-            >
-              <Send className="h-5 w-5 transition-transform duration-200 group-hover:translate-x-0.5" />
-            </Button>
           </div>
         </div>
       </div>
+
+      {/* Drag overlay */}
+      {isDraggingOver && (
+        <div className="absolute inset-0 bg-primary/10 border-2 border-dashed border-primary rounded-lg flex items-center justify-center z-30 pointer-events-none">
+          <p className="font-medium text-primary">Drop images to send</p>
+        </div>
+      )}
     </div>
   );
 };
