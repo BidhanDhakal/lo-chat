@@ -53,7 +53,7 @@ const Body = ({ members }: Props) => {
   }, [messages, isInitialLoad]);
 
   return (
-    <div className="flex-1 w-full flex overflow-y-scroll flex-col-reverse gap-2 p-3 no-scrollbar">
+    <div className="flex-1 w-full flex overflow-y-scroll flex-col-reverse gap-2 p-0 pb-28 md:pb-3 no-scrollbar">
       {messages?.map(({ message, senderImage, senderName, isCurrentUser }, index) => {
         // Check if this message is from the same user as the next message
         // (since messages are in reverse order in the UI)

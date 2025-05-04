@@ -277,7 +277,7 @@ const ChatInput = () => {
   };
 
   return (
-    <div className="p-4 border-t bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
+    <div className="p-4 bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60 fixed bottom-2 left-0 w-full z-20 md:static md:z-auto md:bottom-0">
       <div className="flex items-end gap-x-2">
         {/* Hidden file inputs */}
         <input
@@ -342,7 +342,7 @@ const ChatInput = () => {
             value={content}
             onChange={(e) => setContent(e.target.value)}
             onKeyDown={onKeyDown}
-            placeholder="Type a message..."
+            placeholder="Message..."
             rows={1}
             className="resize-none min-h-[44px] max-h-[150px] py-3 pl-10 pr-20 overflow-y-auto rounded-full bg-muted/50 border-none focus-visible:ring-0 focus-visible:ring-offset-0 focus:outline-none"
             disabled={isSubmitting || isUploadingImage || isUploadingDoc}

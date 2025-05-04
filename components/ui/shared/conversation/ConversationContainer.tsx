@@ -5,7 +5,7 @@ type Props = React.PropsWithChildren<{}>;
 
 const ConversationConatiner = ({ children }: Props) => {
   return (
-    <Card className='w-full h-[calc(100svh-32px)] lg:h-screen lg:rounded-none lg:border-0 lg:border-l p-2 flex flex-col gap-2'>
+    <Card className='w-full h-[calc(100svh-32px)] lg:h-screen lg:rounded-none border-0 md:border md:border-l p-2 flex flex-col gap-2'>
       {children}
     </Card>
   );

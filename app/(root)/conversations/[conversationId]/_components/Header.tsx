@@ -3,7 +3,7 @@ import { Card } from '@/components/ui/card';
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from '@/components/ui/dropdown-menu';
 import { cn } from '@/lib/utils';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
-import { CircleArrowLeft, Settings } from 'lucide-react';
+import { ArrowLeft, Settings } from 'lucide-react';
 import Link from 'next/link';
 import React, { useEffect, useState } from 'react';
 import EmojiParser from '@/components/ui/emoji-parser';
@@ -48,9 +48,9 @@ const Header = ({ imageUrl, name, options }: Props) => {
     const displayName = name.replace(/🛡️/g, '');
 
     return (
-        <Card className="w-full flex roulded-lg items-center p-2 justify-between">
+        <Card className="w-full flex rounded-none border-0 items-center justify-between p-0">
             <div className='flex items-center gap-2'>
-                <Link href="/conversations" className="block lg:hidden"><CircleArrowLeft /></Link>
+                <Link href="/conversations" className="block lg:hidden"><ArrowLeft /></Link>
                 <Avatar
                     className='h-8 w-8 cursor-pointer hover:opacity-80 transition'
                     onClick={() => finalImageUrl && setIsProfileImageOpen(true)}
@@ -65,7 +65,7 @@ const Header = ({ imageUrl, name, options }: Props) => {
             <div className='flex gap-2'>
                 {options ? <DropdownMenu>
                     <DropdownMenuTrigger asChild>
-                        <Button size="icon" variant="secondary">
+                        <Button size="icon" variant="ghost">
                             <Settings />
                         </Button>
                     </DropdownMenuTrigger>
