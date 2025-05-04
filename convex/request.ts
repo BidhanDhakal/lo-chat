@@ -150,64 +150,44 @@ export const createByUsername = mutation({
       // Then remove any other emojis
       result = result.replace(/[\u{1F600}-\u{1F6FF}]|[\u{2600}-\u{26FF}]|[\u{2700}-\u{27BF}]|[\u{1F900}-\u{1F9FF}]|[\u{1F300}-\u{1F5FF}]|[\u{1F680}-\u{1F6FF}]|[\u{1F1E0}-\u{1F1FF}]/gu, '');
 
-      return result.trim();
+      return result.trim().toLowerCase(); // Convert to lowercase for case-insensitive matching
     };
+
+    // Normalize the input username to lowercase for comparison
+    const normalizedInputUsername = args.username.toLowerCase();
 
     // Check if trying to add yourself with or without emojis
     const cleanCurrentUsername = getCleanUsername(currentUser.username);
-    if (currentUser.username === args.username || cleanCurrentUsername === args.username) {
+    if (currentUser.username.toLowerCase() === normalizedInputUsername || cleanCurrentUsername === normalizedInputUsername) {
       throw new ConvexError("Can't send a request to yourself");
     }
 
-    // First try exact match
-    let receiver = await ctx.db
-      .query("users")
-      .withIndex("by_username", (q) => q.eq("username", args.username))
-      .unique();
+    // First try case-insensitive match using lowercase comparisons
+    let receiver = null;
 
-    // If no exact match, try to find a user with emojis in their username
-    if (!receiver) {
-      console.log("No exact match found for username:", args.username);
+    // Get all users to handle case-insensitive matching
+    const allUsers = await ctx.db.query("users").collect();
 
-      // Get all users
-      const allUsers = await ctx.db.query("users").collect();
-      console.log("Total users to check:", allUsers.length);
-
-      // For debugging - log all usernames 
-      console.log("All usernames:", allUsers.map(u => ({
-        original: u.username,
-        cleaned: getCleanUsername(u.username)
-      })));
-
-      // Find a user whose username contains the requested username
-      // This will match usernames with emojis like "john🛡️" when searching for "john"
-      const foundUser = allUsers.find(user => {
-        // Special case for username that ends with shield emoji
-        if (user.username === args.username + "🛡️" || user.username === args.username + "🛡") {
-          console.log("Direct match with shield:", user.username);
-          return true;
-        }
-
-        // Get clean username without emojis
-        const cleanUsername = getCleanUsername(user.username);
-        const isMatch = cleanUsername === args.username;
-
-        if (user.username.includes("🛡️")) {
-          console.log("Found user with shield:", user.username);
-          console.log("Clean username:", cleanUsername);
-          console.log("Input username:", args.username);
-          console.log("Is match:", isMatch);
-        }
-
-        return isMatch;
-      });
-
-      if (foundUser) {
-        console.log("Found matching user:", foundUser.username);
-        receiver = foundUser;
-      } else {
-        console.log("No matching user found after cleaning usernames");
+    // Find users with matching username (case-insensitive)
+    const foundUser = allUsers.find(user => {
+      // Direct match (case-insensitive)
+      if (user.username.toLowerCase() === normalizedInputUsername) {
+        return true;
       }
+
+      // Special case for username that ends with shield emoji (case-insensitive)
+      if (user.username.toLowerCase() === normalizedInputUsername + "🛡️" ||
+        user.username.toLowerCase() === normalizedInputUsername + "🛡") {
+        return true;
+      }
+
+      // Match cleaned username without emojis (case-insensitive)
+      const cleanUsername = getCleanUsername(user.username);
+      return cleanUsername === normalizedInputUsername;
+    });
+
+    if (foundUser) {
+      receiver = foundUser;
     }
 
     if (!receiver) throw new ConvexError("User with this username could not be found");

@@ -60,10 +60,10 @@ const Request = ({ id, imageUrl, username, email }: RequestProps) => {
     <Card className="w-full p-3 flex flex-row items-center justify-between gap-3">
       <div className="flex gap-3 truncate items-center">
         <Avatar>
-          <AvatarImage src={imageUrl} />
+          <AvatarImage src={imageUrl} className="object-cover" />
           <AvatarFallback>
             {username[0]}
-            {username[1]}
+            {username.length > 1 ? username[1] : ''}
           </AvatarFallback>
         </Avatar>
         <div className="flex flex-col truncate">

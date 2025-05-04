@@ -2,7 +2,7 @@ import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from '@/components/ui/dropdown-menu';
 import { cn } from '@/lib/utils';
-import { Avatar, AvatarFallback, AvatarImage } from '@radix-ui/react-avatar';
+import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { CircleArrowLeft, Settings } from 'lucide-react';
 import Link from 'next/link';
 import React, { useEffect, useState } from 'react';
@@ -46,9 +46,9 @@ const Header = ({ imageUrl, name, options }: Props) => {
         <Card className="w-full flex roulded-lg items-center p-2 justify-between">
             <div className='flex items-center gap-2'>
                 <Link href="/conversations" className="block lg:hidden"><CircleArrowLeft /></Link>
-                <Avatar className='h-8 w-8 rounded-full'>
-                    <AvatarImage src={finalImageUrl} className='rounded-full' />
-                    <AvatarFallback className='rounded-full'>{name.substring(0, 1)}</AvatarFallback>
+                <Avatar className='h-8 w-8'>
+                    <AvatarImage src={finalImageUrl} className="object-cover" />
+                    <AvatarFallback>{name.substring(0, 1)}</AvatarFallback>
                 </Avatar>
                 <h2 className='font-semibold'>
                     <EmojiParser text={name} />
