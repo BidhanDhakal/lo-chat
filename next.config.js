@@ -55,6 +55,9 @@ const nextConfig = {
                 permanent: true
             }
         ]
+    },
+    images: {
+        domains: ['elegant-buzzard-525.convex.cloud'],
     }
 };
 

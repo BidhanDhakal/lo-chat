@@ -526,3 +526,239 @@ export const createGroupChat = mutation({
         return conversationId;
     },
 });
+
+// Update group name - only the group creator can update the name
+export const updateGroupName = mutation({
+    args: {
+        conversationId: v.id("conversations"),
+        name: v.string(),
+    },
+    handler: async (ctx, args) => {
+        try {
+            const identity = await ctx.auth.getUserIdentity();
+
+            if (!identity) {
+                throw new Error("Unauthorized");
+            }
+
+            const currentUser = await getUserByClerkId(ctx, identity.subject);
+
+            if (!currentUser) {
+                throw new ConvexError("User not found");
+            }
+
+            // Get conversation
+            const conversation = await ctx.db.get(args.conversationId);
+
+            if (!conversation) {
+                throw new ConvexError("Conversation not found");
+            }
+
+            // Check if it's a group
+            if (!conversation.isGroup) {
+                throw new ConvexError("This is not a group conversation");
+            }
+
+            // Check if current user is the creator
+            if (conversation.creatorId?.toString() !== currentUser._id.toString()) {
+                throw new ConvexError("Only the group creator can update the group name");
+            }
+
+            // Update group name
+            await ctx.db.patch(args.conversationId, {
+                name: args.name
+            });
+
+            return { success: true };
+        } catch (error) {
+            console.error("Error updating group name:", error);
+            throw new ConvexError("Failed to update group name");
+        }
+    }
+});
+
+// Update group image - only the group creator can update the image
+export const updateGroupImage = mutation({
+    args: {
+        conversationId: v.id("conversations"),
+        imageUrl: v.string(),
+    },
+    handler: async (ctx, args) => {
+        try {
+            const identity = await ctx.auth.getUserIdentity();
+
+            if (!identity) {
+                throw new Error("Unauthorized");
+            }
+
+            const currentUser = await getUserByClerkId(ctx, identity.subject);
+
+            if (!currentUser) {
+                throw new ConvexError("User not found");
+            }
+
+            // Get conversation
+            const conversation = await ctx.db.get(args.conversationId);
+
+            if (!conversation) {
+                throw new ConvexError("Conversation not found");
+            }
+
+            // Check if it's a group
+            if (!conversation.isGroup) {
+                throw new ConvexError("This is not a group conversation");
+            }
+
+            // Check if current user is the creator
+            if (conversation.creatorId?.toString() !== currentUser._id.toString()) {
+                throw new ConvexError("Only the group creator can update the group image");
+            }
+
+            // Update group image
+            await ctx.db.patch(args.conversationId, {
+                imageUrl: args.imageUrl
+            });
+
+            return { success: true };
+        } catch (error) {
+            console.error("Error updating group image:", error);
+            throw new ConvexError("Failed to update group image");
+        }
+    }
+});
+
+// Add members to group - only the group creator can add members
+export const addGroupMembers = mutation({
+    args: {
+        conversationId: v.id("conversations"),
+        memberIds: v.array(v.string()),
+    },
+    handler: async (ctx, args) => {
+        try {
+            const identity = await ctx.auth.getUserIdentity();
+
+            if (!identity) {
+                throw new Error("Unauthorized");
+            }
+
+            const currentUser = await getUserByClerkId(ctx, identity.subject);
+
+            if (!currentUser) {
+                throw new ConvexError("User not found");
+            }
+
+            // Get conversation
+            const conversation = await ctx.db.get(args.conversationId);
+
+            if (!conversation) {
+                throw new ConvexError("Conversation not found");
+            }
+
+            // Check if it's a group
+            if (!conversation.isGroup) {
+                throw new ConvexError("This is not a group conversation");
+            }
+
+            // Check if current user is the creator
+            if (conversation.creatorId?.toString() !== currentUser._id.toString()) {
+                throw new ConvexError("Only the group creator can add members to the group");
+            }
+
+            // Get existing members
+            const existingMembers = await ctx.db
+                .query("conversationMembers")
+                .withIndex("by_conversationId", q => q.eq("conversationId", args.conversationId))
+                .collect();
+
+            const existingMemberIds = existingMembers.map(member => member.memberId.toString());
+
+            // Add new members
+            let addedCount = 0;
+            for (const memberId of args.memberIds) {
+                const member = await ctx.db.get(memberId as Id<"users">);
+                if (member && !existingMemberIds.includes(member._id.toString())) {
+                    await ctx.db.insert("conversationMembers", {
+                        conversationId: args.conversationId,
+                        memberId: member._id,
+                    });
+                    addedCount++;
+                }
+            }
+
+            return { success: true, addedCount };
+        } catch (error) {
+            console.error("Error adding group members:", error);
+            throw new ConvexError("Failed to add members to group");
+        }
+    }
+});
+
+// Remove a member from a group - only the group creator can remove other members
+export const removeGroupMember = mutation({
+    args: {
+        conversationId: v.id("conversations"),
+        memberId: v.string(),
+    },
+    handler: async (ctx, args) => {
+        try {
+            const identity = await ctx.auth.getUserIdentity();
+
+            if (!identity) {
+                throw new Error("Unauthorized");
+            }
+
+            const currentUser = await getUserByClerkId(ctx, identity.subject);
+
+            if (!currentUser) {
+                throw new ConvexError("User not found");
+            }
+
+            // Get conversation
+            const conversation = await ctx.db.get(args.conversationId);
+
+            if (!conversation) {
+                throw new ConvexError("Conversation not found");
+            }
+
+            // Check if it's a group
+            if (!conversation.isGroup) {
+                throw new ConvexError("This is not a group conversation");
+            }
+
+            // Check if current user is the creator
+            if (conversation.creatorId?.toString() !== currentUser._id.toString()) {
+                throw new ConvexError("Only the group creator can remove members from the group");
+            }
+
+            // Check if trying to remove creator (which is not allowed)
+            const memberToRemove = await ctx.db.get(args.memberId as Id<"users">);
+            if (!memberToRemove) {
+                throw new ConvexError("Member not found");
+            }
+
+            if (memberToRemove._id.toString() === conversation.creatorId?.toString()) {
+                throw new ConvexError("Cannot remove the group creator");
+            }
+
+            // Find the membership to remove
+            const membership = await ctx.db
+                .query("conversationMembers")
+                .withIndex("by_memberId_conversationId", q =>
+                    q.eq("memberId", memberToRemove._id).eq("conversationId", args.conversationId)
+                )
+                .unique();
+
+            if (!membership) {
+                throw new ConvexError("This user is not a member of the group");
+            }
+
+            // Remove the member by deleting their membership
+            await ctx.db.delete(membership._id);
+
+            return { success: true };
+        } catch (error) {
+            console.error("Error removing group member:", error);
+            throw new ConvexError("Failed to remove member from group");
+        }
+    }
+});

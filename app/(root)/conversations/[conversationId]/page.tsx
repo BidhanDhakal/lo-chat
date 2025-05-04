@@ -12,6 +12,7 @@ import ChatInput from './_components/input/ChatInput';
 import RemoveFriendDialog from './_components/dialogs/RemoveFriendDialog';
 import DeleteGroupDialog from './_components/dialogs/DeleteGroupDialog';
 import LeaveGroupDialog from './_components/dialogs/LeaveGroupDialog';
+import ManageGroupDialog from './_components/dialogs/ManageGroupDialog';
 import { useRouter } from 'next/navigation';
 
 type Props = {
@@ -36,6 +37,7 @@ const ConversationPage = ({ params }: Props) => {
   const [removeFriendDialogOpen, setRemoveFriendDialogOpen] = React.useState(false);
   const [deleteGroupDialogOpen, setDeleteGroupDialogOpen] = React.useState(false);
   const [leaveGroupDialogOpen, setLeaveGroupDialogOpen] = React.useState(false);
+  const [manageGroupDialogOpen, setManageGroupDialogOpen] = React.useState(false);
   const [callType, setCallType] = React.useState<"audio" | "video" | null>(null);
 
   if (conversation === undefined || isCreator === undefined) {
@@ -97,8 +99,14 @@ const ConversationPage = ({ params }: Props) => {
       onClick: () => setLeaveGroupDialogOpen(true)
     });
 
-    // Only creator can delete the group
+    // Only creator can manage and delete the group
     if (isCreator) {
+      options.unshift({
+        label: "Manage group",
+        destructive: false,
+        onClick: () => setManageGroupDialogOpen(true)
+      });
+
       options.push({
         label: "Delete group",
         destructive: true,
@@ -131,6 +139,16 @@ const ConversationPage = ({ params }: Props) => {
         setOpen={setLeaveGroupDialogOpen}
         onSuccess={handleSuccess}
       />
+
+      {isCreator && conversation.isGroup && (
+        <ManageGroupDialog
+          conversationId={conversationId}
+          currentName={getName()}
+          currentImageUrl={getImageUrl()}
+          open={manageGroupDialogOpen}
+          setOpen={setManageGroupDialogOpen}
+        />
+      )}
 
       <Header
         name={getName()}
