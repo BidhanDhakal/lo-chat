@@ -182,10 +182,10 @@ const Message = ({
 
   return (
     <div className={cn(
-      "flex mb-1 py-1",
+      "flex mb-[1px] py-[1px]",
       fromCurrentUser ? "justify-end" : "justify-start"
     )}>
-      <div className="flex items-end max-w-[85%] gap-2">
+      <div className="flex items-end max-w-[85%] gap-1">
         {!fromCurrentUser && !lastByUser && (
           <Avatar className="h-6 w-6">
             <AvatarImage src={senderImage} className="object-cover" />
@@ -199,13 +199,13 @@ const Message = ({
 
         <div>
           {!lastByUser && !fromCurrentUser && (
-            <div className="text-xs text-muted-foreground mb-1 ml-1">
+            <div className="text-xs text-muted-foreground mb-[2px] ml-1">
               {displaySenderName}
             </div>
           )}
 
           <div className={cn(
-            type !== 'image' && "rounded-lg px-3 py-2",
+            type !== 'image' && "rounded-lg px-3 py-[6px]",
             type !== 'image' && (fromCurrentUser ? "bg-primary text-primary-foreground" : "bg-muted")
           )}>
             {type === 'text' && (
@@ -264,7 +264,7 @@ const Message = ({
               </div>
             )}
 
-            <p className="text-xs opacity-50 mt-1 text-right">
+            <p className="text-xs opacity-50 mt-[2px] text-right">
               {format(createdAt, 'p')}
             </p>
           </div>
