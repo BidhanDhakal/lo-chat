@@ -16,23 +16,23 @@ const ImagePopup = ({ imageUrl, isOpen, onClose }: ImagePopupProps) => {
       // Fetch the image as a blob
       const response = await fetch(imageUrl);
       const blob = await response.blob();
-      
+
       // Create a blob URL for the image
       const blobUrl = URL.createObjectURL(blob);
-      
+
       // Create a temporary anchor element
       const a = document.createElement('a');
       a.href = blobUrl;
-      
+
       // Extract filename from URL or use a default name
       // Remove any query parameters from the filename
       const filename = imageUrl.split('/').pop()?.split('?')[0] || 'image.jpg';
       a.download = filename;
-      
+
       // Append to the document, click it, and remove it
       document.body.appendChild(a);
       a.click();
-      
+
       // Clean up
       document.body.removeChild(a);
       URL.revokeObjectURL(blobUrl);
@@ -46,14 +46,14 @@ const ImagePopup = ({ imageUrl, isOpen, onClose }: ImagePopupProps) => {
       <DialogContent className="max-w-[90vw] max-h-[90vh] p-0 bg-transparent border-none">
         <div className="relative w-full h-full flex items-center justify-center">
           <div className="absolute top-2 right-2 z-10 flex gap-2">
-            <button 
+            <button
               onClick={handleDownload}
               className="bg-black/50 text-white rounded-full p-1 hover:bg-black/70 transition"
               title="Download image"
             >
               <Download className="h-6 w-6" />
             </button>
-            <button 
+            <button
               onClick={onClose}
               className="bg-black/50 text-white rounded-full p-1 hover:bg-black/70 transition"
               title="Close"
@@ -61,9 +61,9 @@ const ImagePopup = ({ imageUrl, isOpen, onClose }: ImagePopupProps) => {
               <X className="h-6 w-6" />
             </button>
           </div>
-          <img 
-            src={imageUrl} 
-            alt="Full size image" 
+          <img
+            src={imageUrl}
+            alt="Full size image"
             className="max-w-full max-h-[85vh] object-contain rounded-lg shadow-xl"
           />
         </div>
