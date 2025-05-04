@@ -189,7 +189,7 @@ const Message = ({
     )}>
       <div className="flex items-end max-w-[85%] gap-1">
         {!fromCurrentUser && !lastByUser && (
-          <Avatar className="h-6 w-6 mt-6">
+          <Avatar className="h-6 w-6 self-end -mb-1">
             <AvatarImage src={senderImage} className="object-cover" />
             <AvatarFallback>{displaySenderName.charAt(0).toUpperCase()}</AvatarFallback>
           </Avatar>
@@ -275,7 +275,7 @@ const Message = ({
         </div>
 
         {fromCurrentUser && !lastByUser && (
-          <Avatar className="h-6 w-6 mt-6">
+          <Avatar className="h-6 w-6 self-end -mb-1">
             <AvatarImage src={senderImage} className="object-cover" />
             <AvatarFallback>{displaySenderName.charAt(0).toUpperCase()}</AvatarFallback>
           </Avatar>
