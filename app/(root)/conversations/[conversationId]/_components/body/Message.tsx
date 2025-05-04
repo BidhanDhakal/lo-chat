@@ -184,7 +184,7 @@ const Message = ({
 
   return (
     <div className={cn(
-      "flex mb-[1px] py-[1px]",
+      "flex",
       fromCurrentUser ? "justify-end" : "justify-start"
     )}>
       <div className="flex items-end max-w-[85%] gap-1">
