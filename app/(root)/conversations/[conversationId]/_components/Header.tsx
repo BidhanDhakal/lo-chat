@@ -48,7 +48,7 @@ const Header = ({ imageUrl, name, options }: Props) => {
     const displayName = name.replace(/🛡️/g, '');
 
     return (
-        <Card className="w-full flex rounded-none border-0 items-center justify-between p-0">
+        <Card className="w-full flex rounded-none border-0 md:border-b items-center justify-between p-0 md:p-2">
             <div className='flex items-center gap-2'>
                 <Link href="/conversations" className="block lg:hidden"><ArrowLeft /></Link>
                 <Avatar

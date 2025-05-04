@@ -277,7 +277,7 @@ const ChatInput = () => {
   };
 
   return (
-    <div className="p-4 bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60 fixed bottom-2 left-0 w-full z-20 md:static md:z-auto md:bottom-0">
+    <div className="p-4 bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60 fixed bottom-2 left-0 w-full z-20 md:static md:z-auto md:bottom-0 md:border-t">
       <div className="flex items-end gap-x-2">
         {/* Hidden file inputs */}
         <input
@@ -314,7 +314,7 @@ const ChatInput = () => {
                       <span className="text-[10px] mt-0.5">{Math.round(uploadProgress)}%</span>
                     </div>
                   ) : (
-                    <Plus className="h-4 w-4" />
+                    <Plus className="h-5 w-5" />
                   )}
                 </Button>
               </DropdownMenuTrigger>
@@ -356,7 +356,7 @@ const ChatInput = () => {
                 disabled={isSubmitting || isUploadingImage || isUploadingDoc}
                 onClick={() => setIsEmojiPickerOpen(!isEmojiPickerOpen)}
               >
-                <Smile className="h-4 w-4" />
+                <Smile className="h-5 w-5" />
               </Button>
               {renderEmojiPicker()}
             </div>
@@ -366,7 +366,7 @@ const ChatInput = () => {
               disabled={(!content.trim() && !isUploadingImage && !isUploadingDoc) || isSubmitting || isUploadingImage || isUploadingDoc}
               className="text-primary bg-primary/10 hover:bg-primary/20 h-9 w-9 rounded-full transition-all duration-200 hover:scale-110 hover:shadow-md disabled:opacity-50 disabled:hover:scale-100 disabled:hover:shadow-none disabled:cursor-not-allowed"
             >
-              <Send className="h-4 w-4 transition-transform duration-200 group-hover:translate-x-0.5" />
+              <Send className="h-5 w-5 transition-transform duration-200 group-hover:translate-x-0.5" />
             </Button>
           </div>
         </div>
