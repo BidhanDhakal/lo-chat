@@ -60,6 +60,13 @@ const Body = ({ members }: Props) => {
         const isConsecutive = index > 0 &&
           messages[index - 1].message.senderId === message.senderId;
 
+        // Check if this is the first message from this user in the conversation
+        // We look at all later messages (earlier in time, since array is reversed)
+        // to see if this is the first appearance of this sender
+        const isFirstFromUser = !messages.slice(index + 1).some(
+          msg => msg.message.senderId === message.senderId
+        );
+
         return (
           <Message key={message._id}
             fromCurrentUser={isCurrentUser}
@@ -69,6 +76,7 @@ const Body = ({ members }: Props) => {
             content={message.content}
             createdAt={message._creationTime}
             type={message.type}
+            isFirstMessage={isFirstFromUser}
           />
         );
       })}
