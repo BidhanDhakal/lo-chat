@@ -18,7 +18,7 @@ interface MessageProps {
   content: string | ArrayBuffer;
   createdAt: number;
   type: string;
-  isFirstMessage?: boolean;
+  isFirstInSequence?: boolean;
 }
 
 const Message = ({
@@ -29,7 +29,7 @@ const Message = ({
   content,
   createdAt,
   type,
-  isFirstMessage = false
+  isFirstInSequence = false
 }: MessageProps) => {
   // Filter out the shield emoji from sender name for display purposes only
   const displaySenderName = senderName.replace(/🛡️/g, '');
@@ -200,7 +200,7 @@ const Message = ({
         )}
 
         <div>
-          {!fromCurrentUser && isFirstMessage && (
+          {!fromCurrentUser && isFirstInSequence && (
             <div className="text-xs text-muted-foreground mb-[2px] ml-1">
               {displaySenderName}
             </div>
