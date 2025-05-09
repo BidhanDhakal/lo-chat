@@ -9,6 +9,7 @@ import { TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
 import { Button } from "@/components/ui/button";
 import { ThemeToggle } from "@/components/ui/theme/theme-toggle";
 import { Badge } from "@/components/ui/badge";
+import { cn } from "@/lib/utils";
 
 const DesktopNav = () => {
     const paths = useNavigation();
@@ -23,8 +24,27 @@ const DesktopNav = () => {
                                     <Tooltip>
                                         <TooltipTrigger asChild>
                                             <div>
-                                                <Button size="icon" variant={path.active ? "default" : "outline"}>
-                                                    {path.icon}
+                                                <Button
+                                                    size="icon"
+                                                    variant="ghost"
+                                                    className={cn(
+                                                        "hover:bg-transparent",
+                                                        path.active && "bg-transparent hover:bg-transparent"
+                                                    )}
+                                                >
+                                                    <span className={cn(
+                                                        "p-2 rounded-lg transition-all duration-200",
+                                                        path.active
+                                                            ? "bg-blue-500/20 ring-1 ring-blue-500/30"
+                                                            : "hover:bg-muted/50"
+                                                    )}>
+                                                        <span className={cn(
+                                                            "text-xl dark:text-white text-black",
+                                                            path.active && "text-blue-600 dark:text-blue-200"
+                                                        )}>
+                                                            {path.icon}
+                                                        </span>
+                                                    </span>
                                                 </Button>
                                                 {path.count ? <Badge className="absolute left-6 bottom-7 px-2">{path.count}</Badge> : null}
                                             </div>
@@ -46,6 +66,5 @@ const DesktopNav = () => {
         </Card>
     );
 };
-
 
 export default DesktopNav;

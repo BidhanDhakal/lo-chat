@@ -10,6 +10,7 @@ import { Button } from "@/components/ui/button";
 import { useConversation } from "@/hooks/useConversation";
 import { ThemeToggle } from "@/components/ui/theme/theme-toggle";
 import { Badge } from "@/components/ui/badge";
+import { cn } from "@/lib/utils";
 
 const MobileNav = () => {
     const paths = useNavigation();
@@ -27,15 +28,32 @@ const MobileNav = () => {
                                 <Link href={path.href}>
                                     <Tooltip>
                                         <TooltipTrigger asChild>
-                                            <Button size="icon" variant={path.active ? "default" : "outline"}>
-                                                {path.icon}
-                                                {
-                                                    path.count ? (
-                                                        <Badge className="absolute left-6 bottom-6 px-2">
-                                                            {path.count}
-                                                        </Badge>
-                                                    ) : null
-                                                }
+                                            <Button
+                                                size="icon"
+                                                variant="ghost"
+                                                className={cn(
+                                                    "hover:bg-transparent",
+                                                    path.active && "bg-transparent hover:bg-transparent"
+                                                )}
+                                            >
+                                                <span className={cn(
+                                                    "p-2 rounded-lg transition-all duration-200",
+                                                    path.active
+                                                        ? "bg-blue-500/20 ring-1 ring-blue-500/30"
+                                                        : "hover:bg-muted/50"
+                                                )}>
+                                                    <span className={cn(
+                                                        "dark:text-white text-black",
+                                                        path.active && "text-blue-600 dark:text-blue-200"
+                                                    )}>
+                                                        {path.icon}
+                                                    </span>
+                                                </span>
+                                                {path.count ? (
+                                                    <Badge className="absolute left-6 bottom-6 px-2">
+                                                        {path.count}
+                                                    </Badge>
+                                                ) : null}
                                             </Button>
                                         </TooltipTrigger>
                                         <TooltipContent>
@@ -55,6 +73,5 @@ const MobileNav = () => {
         </Card>
     );
 };
-
 
 export default MobileNav;

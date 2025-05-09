@@ -31,6 +31,7 @@
     "convex": "^1.19.1",
     "date-fns": "^4.1.0",
     "emoji-picker-react": "^4.12.2",
+    "framer-motion": "^12.10.4",
     "howler": "^2.2.4",
     "lucide-react": "^0.475.0",
     "next": "15.1.7",
