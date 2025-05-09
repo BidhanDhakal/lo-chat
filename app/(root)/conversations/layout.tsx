@@ -3,13 +3,19 @@
 import ItemList from '@/components/ui/shared/item-list/ItemList';
 import { api } from '@/convex/_generated/api';
 import { useQuery } from 'convex/react';
-import { Loader2, Search, UserPlus, UsersRound } from 'lucide-react';
+import { Loader2, Search, UserPlus, UsersRound, MoreVertical } from 'lucide-react';
 import React, { useState } from 'react'
 import DMConversationItem from './_components/DMConversationItem';
 import { GroupChatDialog } from './_components/GroupChatDialog';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
+import {
+    DropdownMenu,
+    DropdownMenuContent,
+    DropdownMenuItem,
+    DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
 
 type Props = React.PropsWithChildren<{}>;
 
@@ -41,20 +47,26 @@ const ConversationsLayout = ({ children }: Props) => {
                     <TooltipProvider>
                         <Tooltip>
                             <TooltipTrigger asChild>
-                                <Button
-                                    variant="ghost"
-                                    size="icon"
-                                    className="rounded-full h-8 w-8 border border-slate-200 dark:border-slate-800"
-                                    onClick={() => setGroupDialogOpen(true)}
-                                >
-                                    <div className="relative">
-                                        <UsersRound className="h-4 w-4" />
-                                        <span className="absolute -top-1 -right-1 text-xs font-bold text-primary">+</span>
-                                    </div>
-                                </Button>
+                                <DropdownMenu>
+                                    <DropdownMenuTrigger asChild>
+                                        <Button
+                                            variant="ghost"
+                                            size="icon"
+                                            className="rounded-full h-8 w-8"
+                                        >
+                                            <MoreVertical className="h-4 w-4" />
+                                        </Button>
+                                    </DropdownMenuTrigger>
+                                    <DropdownMenuContent align="end">
+                                        <DropdownMenuItem onClick={() => setGroupDialogOpen(true)}>
+                                            <UsersRound className="h-4 w-4 mr-2" />
+                                            Create Group
+                                        </DropdownMenuItem>
+                                    </DropdownMenuContent>
+                                </DropdownMenu>
                             </TooltipTrigger>
                             <TooltipContent>
-                                <p>Create group</p>
+                                <p>More options</p>
                             </TooltipContent>
                         </Tooltip>
                     </TooltipProvider>
