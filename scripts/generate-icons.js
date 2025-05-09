@@ -6,7 +6,7 @@ const sizes = [72, 96, 128, 144, 152, 192, 384, 512];
 const inputSvg = path.join(__dirname, '../public/lo-chat.svg');
 const outputDir = path.join(__dirname, '../public/icons');
 
-// Ensure output directory exists
+
 if (!fs.existsSync(outputDir)) {
     fs.mkdirSync(outputDir, { recursive: true });
 }
