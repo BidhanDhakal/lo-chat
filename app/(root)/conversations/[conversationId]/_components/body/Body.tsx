@@ -22,6 +22,7 @@ const Body = ({ members }: Props) => {
   const messages = useQuery(api.messages.get, { conversationId: conversationId as Id<"conversations"> });
   const messagesRef = useRef<typeof messages>(null);
   const [isInitialLoad, setIsInitialLoad] = useState(true);
+  const [newMessageId, setNewMessageId] = useState<string | null>(null);
 
   useEffect(() => {
     // Skip notification on initial load
@@ -37,14 +38,25 @@ const Body = ({ members }: Props) => {
       const latestMessage = messages[0];
       const previousMessages = messagesRef.current;
 
-      // If we have a new message that's not from the current user
+      // If we have a new message
       if (
         previousMessages.length === 0 ||
-        (latestMessage.message._id !== previousMessages[0].message._id && !latestMessage.isCurrentUser)
+        latestMessage.message._id !== previousMessages[0].message._id
       ) {
-        // Play the notification sound
-        notificationSound.playMessageSound();
-        console.log("Playing notification sound for new message");
+        // Set the new message ID for animation
+        setNewMessageId(latestMessage.message._id.toString());
+
+        // Clear the new message ID after animation time
+        setTimeout(() => {
+          setNewMessageId(null);
+        }, 2000);
+
+        // If the message is not from the current user, play sound
+        if (!latestMessage.isCurrentUser) {
+          // Play the notification sound
+          notificationSound.playMessageSound();
+          console.log("Playing notification sound for new message");
+        }
       }
 
       // Update our reference
@@ -65,6 +77,9 @@ const Body = ({ members }: Props) => {
         const isFirstInSequence = index === messages.length - 1 ||
           messages[index + 1].message.senderId !== message.senderId;
 
+        // Check if this is a new message to animate
+        const isNew = message._id.toString() === newMessageId;
+
         return (
           <Message key={message._id}
             fromCurrentUser={isCurrentUser}
@@ -75,6 +90,7 @@ const Body = ({ members }: Props) => {
             createdAt={message._creationTime}
             type={message.type}
             isFirstInSequence={isFirstInSequence}
+            isNew={isNew}
           />
         );
       })}

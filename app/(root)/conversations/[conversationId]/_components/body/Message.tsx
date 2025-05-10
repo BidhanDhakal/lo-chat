@@ -19,6 +19,7 @@ interface MessageProps {
   createdAt: number;
   type: string;
   isFirstInSequence?: boolean;
+  isNew?: boolean;
 }
 
 const Message = ({
@@ -29,7 +30,8 @@ const Message = ({
   content,
   createdAt,
   type,
-  isFirstInSequence = false
+  isFirstInSequence = false,
+  isNew = false
 }: MessageProps) => {
   // Filter out the shield emoji from sender name for display purposes only
   const displaySenderName = senderName.replace(/🛡️/g, '');
@@ -189,7 +191,11 @@ const Message = ({
       "flex",
       fromCurrentUser ? "justify-end" : "justify-start"
     )}>
-      <div className="flex items-end max-w-[85%] gap-1">
+      <div className={cn(
+        "flex items-end max-w-[85%] gap-1",
+        isNew && fromCurrentUser && "animate-message-sent",
+        isNew && !fromCurrentUser && "animate-message-received"
+      )}>
         {!fromCurrentUser && !lastByUser && (
           <Avatar className="h-6 w-6 self-end -mb-1">
             <AvatarImage src={senderImage} className="object-cover" />
@@ -212,7 +218,8 @@ const Message = ({
             type !== 'image' && "rounded-lg px-3 py-[6px]",
             type !== 'image' && (fromCurrentUser
               ? "bg-primary text-primary-foreground shadow-sm rounded-br-none"
-              : "bg-muted shadow-sm rounded-bl-none")
+              : "bg-muted shadow-sm rounded-bl-none"),
+            isNew && "animate-message-bubble"
           )}>
             {type === 'text' && (
               <p className="whitespace-pre-wrap">
@@ -234,7 +241,8 @@ const Message = ({
                   <div className="flex">
                     <div className={cn(
                       "relative overflow-hidden rounded-lg shadow-md",
-                      !imageLoaded && "bg-muted/10 backdrop-blur-md border border-white/20"
+                      !imageLoaded && "bg-muted/10 backdrop-blur-md border border-white/20",
+                      isNew && "animate-image-appear"
                     )}>
                       <img
                         src={imageUrl}
@@ -273,7 +281,10 @@ const Message = ({
 
             {type === 'document' && documentInfo && (
               <div
-                className="flex items-center gap-2 p-2 bg-background/50 rounded-lg cursor-pointer hover:bg-background/70 transition group shadow-sm"
+                className={cn(
+                  "flex items-center gap-2 p-2 bg-background/50 rounded-lg cursor-pointer hover:bg-background/70 transition group shadow-sm",
+                  isNew && "animate-document-appear"
+                )}
                 onClick={(e) => documentUrl && handleDownload(e, documentUrl, documentInfo.fileName)}
               >
                 <div className="flex items-center gap-2 flex-1 min-w-0">
@@ -305,6 +316,58 @@ const Message = ({
           onClose={() => setIsImagePopupOpen(false)}
         />
       )}
+
+      <style jsx global>{`
+        @keyframes messageSent {
+          0% { opacity: 0; transform: translateY(10px) translateX(10px) scale(0.95); }
+          70% { opacity: 1; transform: translateY(-2px) translateX(0) scale(1.02); }
+          100% { opacity: 1; transform: translateY(0) translateX(0) scale(1); }
+        }
+
+        @keyframes messageReceived {
+          0% { opacity: 0; transform: translateY(10px) translateX(-10px) scale(0.95); }
+          70% { opacity: 1; transform: translateY(-2px) translateX(0) scale(1.02); }
+          100% { opacity: 1; transform: translateY(0) translateX(0) scale(1); }
+        }
+
+        @keyframes messageBubble {
+          0% { box-shadow: 0 0 0 rgba(0,0,0,0); }
+          50% { box-shadow: 0 3px 15px rgba(59, 130, 246, 0.3); }
+          100% { box-shadow: 0 1px 3px rgba(59, 130, 246, 0.15); }
+        }
+
+        @keyframes imageAppear {
+          0% { box-shadow: 0 0 0 rgba(0,0,0,0); }
+          30% { box-shadow: 0 0 20px rgba(59, 130, 246, 0.4); border: 1px solid rgba(147, 197, 253, 0.5); }
+          100% { box-shadow: 0 0 5px rgba(59, 130, 246, 0.15); border: 1px solid rgba(147, 197, 253, 0.1); }
+        }
+
+        @keyframes documentAppear {
+          0% { background-color: rgba(255,255,255,0.2); }
+          40% { background-color: rgba(219, 234, 254, 0.6); }
+          100% { background-color: rgba(255,255,255,0.2); }
+        }
+
+        .animate-message-sent {
+          animation: messageSent 0.5s ease-out forwards;
+        }
+
+        .animate-message-received {
+          animation: messageReceived 0.5s ease-out forwards;
+        }
+
+        .animate-message-bubble {
+          animation: messageBubble 1s ease-out forwards;
+        }
+
+        .animate-image-appear {
+          animation: imageAppear 1.5s ease-out forwards;
+        }
+
+        .animate-document-appear {
+          animation: documentAppear 1.5s ease-out forwards;
+        }
+      `}</style>
     </div>
   );
 };
