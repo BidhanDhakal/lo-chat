@@ -4,7 +4,6 @@ import { getUserByClerkId } from "./_utils";
 import { QueryCtx, MutationCtx } from "./_generated/server";
 import { Id } from "./_generated/dataModel";
 
-// Define types for our data structures
 type ConversationWithTimestamp = {
     _id: Id<"conversations">;
     _creationTime: number;
@@ -12,7 +11,7 @@ type ConversationWithTimestamp = {
     name?: string;
     lastMessageId?: Id<"messages">;
     lastMessageTimestamp: number;
-    [key: string]: any; // For any other properties
+    [key: string]: any;
 };
 
 type ConversationDetails = {
@@ -37,20 +36,16 @@ export const get = query({
                 throw new ConvexError("User not found");
             }
 
-            // Get all conversation memberships for the current user
             const conversationMemberships = await ctx.db.query("conversationMembers")
                 .withIndex("by_memberId", (q) => q.eq("memberId", currentUser._id))
                 .collect();
 
-            // Safely map over memberships and handle any errors
             const conversationsPromises = conversationMemberships.map(async (membership) => {
                 try {
-                    // Check if the membership has a valid conversationId
                     if (!membership.conversationId) {
                         return null;
                     }
 
-                    // Try to get the conversation
                     let conversation;
                     try {
                         conversation = await ctx.db.get(membership.conversationId);
@@ -59,12 +54,10 @@ export const get = query({
                         return null;
                     }
 
-                    // If conversation doesn't exist, return null
                     if (!conversation) {
                         return null;
                     }
 
-                    // Safely get the last message timestamp
                     let lastMessageTimestamp = 0;
                     if (conversation.lastMessageId) {
                         try {
@@ -74,7 +67,6 @@ export const get = query({
                             }
                         } catch (error) {
                             console.error("Error fetching last message:", error);
-                            // Continue with timestamp = 0
                         }
                     }
 
@@ -88,7 +80,6 @@ export const get = query({
                 }
             });
 
-            // Wait for all promises to resolve
             let conversations: (ConversationWithTimestamp | null)[] = [];
             try {
                 conversations = await Promise.all(conversationsPromises);
@@ -97,24 +88,18 @@ export const get = query({
                 conversations = [];
             }
 
-            // Filter out null conversations
             const filteredConversations: ConversationWithTimestamp[] = conversations.filter(
                 (conversation): conversation is ConversationWithTimestamp => conversation !== null
             );
 
-            // Sort conversations by the actual message timestamp
-            // TypeScript now knows these are non-null values
             filteredConversations.sort((a, b) => {
                 return b.lastMessageTimestamp - a.lastMessageTimestamp;
             });
 
-            // Safely map over conversations to get details
             const detailsPromises = filteredConversations.map(async (conversation) => {
                 try {
-                    // Skip if conversation is null (this check is redundant now but kept for safety)
                     if (!conversation) return null;
 
-                    // Get all memberships for this conversation
                     let allconversationMemberships = [];
                     try {
                         allconversationMemberships = await ctx.db.query("conversationMembers")
@@ -125,18 +110,13 @@ export const get = query({
                         return null;
                     }
 
-                    // Get last message details
                     let lastMessage = null;
                     try {
                         lastMessage = await getLastMessageDetails({ ctx, id: conversation.lastMessageId });
                     } catch (error) {
-                        console.error("Error getting last message details:", error);
-                        // Continue with lastMessage = null
                     }
 
-                    // Handle group conversations
                     if (conversation.isGroup) {
-                        // Get all members' usernames for group chats
                         const memberUsernames = await Promise.all(
                             allconversationMemberships.map(async (membership) => {
                                 try {
@@ -149,25 +129,19 @@ export const get = query({
                             })
                         );
 
-                        // Filter out null values and return the conversation with members
                         const groupMembers = memberUsernames.filter((username): username is string => username !== null);
                         return { conversation, lastMessage, groupMembers };
-                    }
-                    // Handle direct conversations
-                    else {
-                        // Find the other member in the conversation
+                    } else {
                         const otherMemberships = allconversationMemberships.filter(
                             (membership) => membership.memberId !== currentUser._id
                         );
 
-                        // Check if there's another member
                         if (!otherMemberships || otherMemberships.length === 0) {
                             return null;
                         }
 
                         const otherMembership = otherMemberships[0];
 
-                        // Try to get the other member's details
                         let otherMember = null;
                         try {
                             otherMember = await ctx.db.get(otherMembership.memberId);
@@ -176,7 +150,6 @@ export const get = query({
                             return null;
                         }
 
-                        // Check if otherMember exists
                         if (!otherMember) {
                             return null;
                         }
@@ -189,7 +162,6 @@ export const get = query({
                 }
             });
 
-            // Wait for all detail promises to resolve
             let conversationsWithDetails: ConversationDetails[] = [];
             try {
                 conversationsWithDetails = await Promise.all(detailsPromises);
@@ -198,7 +170,6 @@ export const get = query({
                 conversationsWithDetails = [];
             }
 
-            // Filter out null results
             return conversationsWithDetails.filter((item): item is NonNullable<ConversationDetails> => item !== null);
 
         } catch (error) {
@@ -267,21 +238,18 @@ export const createGroup = mutation({
                 throw new ConvexError("User not found");
             }
 
-            // Create the group conversation with creator ID
             const conversationId = await ctx.db.insert("conversations", {
                 isGroup: true,
                 name: args.name,
-                lastMessageId: undefined, // No messages initially
-                creatorId: currentUser._id, // Set the creator ID
+                lastMessageId: undefined,
+                creatorId: currentUser._id,
             });
 
-            // Add the current user to the conversation
             await ctx.db.insert("conversationMembers", {
                 conversationId,
                 memberId: currentUser._id,
             });
 
-            // Add all other members to the conversation
             for (const memberId of args.memberIds) {
                 await ctx.db.insert("conversationMembers", {
                     conversationId,
@@ -297,7 +265,6 @@ export const createGroup = mutation({
     },
 });
 
-// Leave group - any member including creator can leave a group
 export const leaveGroup = mutation({
     args: {
         conversationId: v.id("conversations"),
@@ -316,19 +283,16 @@ export const leaveGroup = mutation({
                 throw new ConvexError("User not found");
             }
 
-            // Get conversation
             const conversation = await ctx.db.get(args.conversationId);
 
             if (!conversation) {
                 throw new ConvexError("Conversation not found");
             }
 
-            // Check if it's a group
             if (!conversation.isGroup) {
                 throw new ConvexError("This is not a group conversation");
             }
 
-            // Find membership
             const membership = await ctx.db
                 .query("conversationMembers")
                 .withIndex("by_memberId_conversationId", q =>
@@ -340,11 +304,9 @@ export const leaveGroup = mutation({
                 throw new ConvexError("You are not a member of this group");
             }
 
-            // Check if current user is the creator
             const isCreator = conversation.creatorId?.toString() === currentUser._id.toString();
 
             if (isCreator) {
-                // Get all other members
                 const otherMembers = await ctx.db
                     .query("conversationMembers")
                     .withIndex("by_conversationId", q => q.eq("conversationId", args.conversationId))

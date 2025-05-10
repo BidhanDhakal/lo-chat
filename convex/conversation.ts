@@ -57,7 +57,7 @@ export const get = query({
     }
 });
 
-// Get all members of a conversation
+
 export const getMembers = query({
     args: {
         conversationId: v.id("conversations"),
@@ -69,13 +69,11 @@ export const getMembers = query({
             throw new Error("Unauthorized");
         }
 
-        // Get all members of the conversation
         const memberships = await ctx.db
             .query("conversationMembers")
             .withIndex("by_conversationId", q => q.eq("conversationId", args.conversationId))
             .collect();
 
-        // Get user details for each member
         const members = await Promise.all(
             memberships.map(async (membership) => {
                 const user = await ctx.db.get(membership.memberId);

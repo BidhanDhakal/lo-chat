@@ -13,13 +13,13 @@ const LoadingLogo = ({ size = 180 }: Props) => {
       setIsMobile(mobile);
     };
 
-    // Set mounted to true after component mounts
+
     setMounted(true);
 
-    // Initial check
+
     checkIfMobile();
 
-    // Add event listener for window resize
+
     window.addEventListener('resize', checkIfMobile);
 
     return () => {
@@ -27,7 +27,6 @@ const LoadingLogo = ({ size = 180 }: Props) => {
     };
   }, []);
 
-  // Don't render anything until after component mounts to avoid hydration mismatch
   if (!mounted) {
     return null;
   }
@@ -35,7 +34,7 @@ const LoadingLogo = ({ size = 180 }: Props) => {
   return (
     <div className='h-full w-full flex flex-col items-center justify-center bg-gradient-to-b from-background to-background/50 relative'>
       {isMobile ? (
-        // Mobile layout
+
         <div className="flex flex-col items-center justify-center h-full w-full px-4">
           <div className="relative flex flex-col items-center mb-8">
             <div className="animate-pulse duration-3000" style={{ transform: 'scale(0.7)' }}>
@@ -70,7 +69,7 @@ const LoadingLogo = ({ size = 180 }: Props) => {
           </div>
         </div>
       ) : (
-        // Desktop layout
+
         <div className="flex flex-col items-center justify-center h-full w-full">
           <div className="relative flex flex-col items-center">
             <div className="animate-pulse duration-3000">

@@ -2,7 +2,7 @@ import { QueryCtx, MutationCtx } from "./_generated/server";
 import { Id } from "./_generated/dataModel";
 import { ConvexError } from "convex/values";
 
-//{ctx, clerkId} : { ctx: QueryCtx | MutationCtx; clerkId: string }
+
 export const getUserByClerkId = async (ctx: QueryCtx | MutationCtx, clerkId: string) => {
   return await ctx.db
     .query("users")

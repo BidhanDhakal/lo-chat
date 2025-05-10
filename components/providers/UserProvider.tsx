@@ -12,11 +12,11 @@ export const UserProvider = ({ children }: { children: React.ReactNode }) => {
     const updateUser = useMutation(api.users.update);
     const [isLoading, setIsLoading] = useState(true);
 
-    // Keep track of previous values to detect changes
+
     const prevImageUrlRef = useRef<string | null>(null);
     const prevUsernameRef = useRef<string | null>(null);
 
-    // Check if user exists in Convex
+
     const existingUser = useQuery(api.users.get, user ? { clerkId: user.id } : "skip");
 
     useEffect(() => {
@@ -28,7 +28,7 @@ export const UserProvider = ({ children }: { children: React.ReactNode }) => {
         const syncUserWithConvex = async () => {
             try {
                 if (!existingUser) {
-                    // First time user - create them in Convex
+
                     await createUser({
                         clerkId: user.id,
                         username: user.username || user.firstName || "Anonymous",
@@ -37,7 +37,7 @@ export const UserProvider = ({ children }: { children: React.ReactNode }) => {
                     });
                     console.log("Created new user in Convex");
                 } else {
-                    // Check for profile changes from Clerk
+
                     const currentImageUrl = user.imageUrl || "";
                     const currentUsername = user.username || user.firstName || "Anonymous";
 
@@ -49,7 +49,7 @@ export const UserProvider = ({ children }: { children: React.ReactNode }) => {
                         prevUsernameRef.current !== currentUsername &&
                         existingUser.username !== currentUsername;
 
-                    // Sync changes if detected
+
                     if (imageChanged || usernameChanged) {
                         console.log("Detected profile changes from Clerk, syncing to Convex");
 
@@ -64,7 +64,7 @@ export const UserProvider = ({ children }: { children: React.ReactNode }) => {
                         }
 
                         if (usernameChanged) {
-                            // Ensure the username first letter is capitalized
+
                             let processedUsername = currentUsername;
                             if (processedUsername.length > 0) {
                                 processedUsername = processedUsername.charAt(0).toUpperCase() + processedUsername.slice(1);
@@ -77,7 +77,6 @@ export const UserProvider = ({ children }: { children: React.ReactNode }) => {
                         await updateUser(updates);
                     }
 
-                    // Update refs
                     prevImageUrlRef.current = currentImageUrl;
                     prevUsernameRef.current = currentUsername;
                 }
