@@ -36,6 +36,7 @@ const Message = ({
 
   const [imageUrl, setImageUrl] = useState<string | null>(null);
   const [isLoading, setIsLoading] = useState(false);
+  const [imageLoaded, setImageLoaded] = useState(false);
   const [isImagePopupOpen, setIsImagePopupOpen] = useState(false);
   const [showDownloadButton, setShowDownloadButton] = useState(false);
   const [documentInfo, setDocumentInfo] = useState<{ storageId: string; fileName: string; fileType: string } | null>(null);
@@ -48,6 +49,7 @@ const Message = ({
       if (type === 'image') {
         try {
           setIsLoading(true);
+          setImageLoaded(false);
           const url = await getUrl({ storageId: content as string });
           setImageUrl(url);
         } catch (error) {
@@ -225,22 +227,36 @@ const Message = ({
                 onMouseLeave={() => setShowDownloadButton(false)}
               >
                 {isLoading ? (
-                  <div className="flex items-center justify-center h-[200px] w-[250px]">
+                  <div className="flex items-center justify-center h-[200px] w-[250px] bg-muted/10 backdrop-blur-md rounded-lg border border-white/20">
                     <Loader2 className="h-8 w-8 animate-spin text-muted-foreground" />
                   </div>
                 ) : imageUrl ? (
                   <div className="flex">
-                    <img
-                      src={imageUrl}
-                      alt="Image message"
-                      className="max-h-[200px] max-w-[250px] object-contain cursor-pointer hover:opacity-90 transition rounded-lg shadow-sm"
-                      onLoad={() => setIsLoading(false)}
-                      onClick={() => setIsImagePopupOpen(true)}
-                    />
-                    {showDownloadButton && (
+                    <div className={cn(
+                      "relative overflow-hidden rounded-lg shadow-md",
+                      !imageLoaded && "bg-muted/10 backdrop-blur-md border border-white/20"
+                    )}>
+                      <img
+                        src={imageUrl}
+                        alt="Image message"
+                        className={cn(
+                          "max-h-[200px] max-w-[250px] object-contain cursor-pointer hover:opacity-90 transition rounded-lg",
+                          !imageLoaded && "opacity-0",
+                          imageLoaded && "opacity-100 transition-opacity duration-300"
+                        )}
+                        onLoad={() => setImageLoaded(true)}
+                        onClick={() => setIsImagePopupOpen(true)}
+                      />
+                      {!imageLoaded && (
+                        <div className="absolute inset-0 flex items-center justify-center">
+                          <Loader2 className="h-8 w-8 animate-spin text-muted-foreground" />
+                        </div>
+                      )}
+                    </div>
+                    {showDownloadButton && imageLoaded && (
                       <button
                         onClick={(e) => handleDownload(e, imageUrl, 'image.jpg')}
-                        className="absolute top-2 right-2 bg-black/50 text-white rounded-full p-1 hover:bg-black/70 transition"
+                        className="absolute top-2 right-2 bg-black/50 backdrop-blur-sm text-white rounded-full p-1 hover:bg-black/70 transition"
                         title="Download image"
                       >
                         <Download className="h-4 w-4" />
@@ -248,7 +264,7 @@ const Message = ({
                     )}
                   </div>
                 ) : (
-                  <div className="flex items-center justify-center h-[200px] w-[250px]">
+                  <div className="flex items-center justify-center h-[200px] w-[250px] bg-muted/10 backdrop-blur-md rounded-lg border border-white/20">
                     <p className="text-sm text-muted-foreground">Failed to load image</p>
                   </div>
                 )}
