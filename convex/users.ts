@@ -26,7 +26,7 @@ export const create = mutation({
     },
 });
 
-// Update user profile data
+
 export const update = mutation({
     args: {
         username: v.optional(v.string()),
@@ -43,28 +43,28 @@ export const update = mutation({
             throw new Error("User not found");
         }
 
-        // Only update the fields that were provided
+
         const updates: Partial<{
             username: string;
             imageUrl: string;
         }> = {};
 
         if (args.username !== undefined) {
-            // Ensure the first letter is capitalized
+
             let processedUsername = args.username.trim();
 
-            // Check if username is not empty before capitalizing
+
             if (processedUsername.length > 0) {
-                // Capitalize the first letter
+
                 processedUsername = processedUsername.charAt(0).toUpperCase() + processedUsername.slice(1);
             }
 
-            // Check if the current username has a verification badge
+
             const hasVerificationBadge = currentUser.username.includes("🛡️");
 
-            // If verified, preserve the badge by appending it to the new username
+
             if (hasVerificationBadge) {
-                // Remove any existing badge from the new username to avoid duplicates
+
                 const cleanUsername = processedUsername.replace(/🛡️/g, "").trim();
                 updates.username = `${cleanUsername}🛡️`;
                 console.log(`Preserving verification badge for ${currentUser._id}, new username: ${updates.username}`);
@@ -77,7 +77,7 @@ export const update = mutation({
             updates.imageUrl = args.imageUrl;
         }
 
-        // Only update if there are changes
+
         if (Object.keys(updates).length > 0) {
             await ctx.db.patch(currentUser._id, updates);
             console.log(`User ${currentUser._id} updated their profile: ${JSON.stringify(updates)}`);
