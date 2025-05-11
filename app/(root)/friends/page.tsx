@@ -13,10 +13,10 @@ const FriendsPage = () => {
   const requests = useQuery(api.requests.get);
   const prevRequestsCountRef = useRef<number>(0);
 
-  // Play sound when new friend request arrives
+
   useEffect(() => {
     if (requests && requests.length > prevRequestsCountRef.current) {
-      // Only play if it's not the initial load (prevRequestsCount > 0)
+
       if (prevRequestsCountRef.current > 0) {
         notificationSound.playRequestSound();
         console.log("Playing notification sound for new friend request");

@@ -24,17 +24,17 @@ const ConversationsLayout = ({ children }: Props) => {
     const [searchQuery, setSearchQuery] = useState("");
     const conversations = useQuery(api.conversations.get)
 
-    // Filter conversations based on search query
+
     const filteredConversations = conversations?.filter(conversation => {
         if (!searchQuery) return true;
 
         const searchLower = searchQuery.toLowerCase();
 
         if (conversation.conversation.isGroup) {
-            // Search in group name
+
             return conversation.conversation.name?.toLowerCase().includes(searchLower);
         } else {
-            // Search in friend's username
+
             return conversation.otherMember?.username?.toLowerCase().includes(searchLower);
         }
     });

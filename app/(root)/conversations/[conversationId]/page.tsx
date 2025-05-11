@@ -22,7 +22,7 @@ type Props = {
 }
 
 const ConversationPage = ({ params }: Props) => {
-  // Unwrap params using React.use()
+
   const { conversationId } = React.use(params);
   const router = useRouter();
 
@@ -53,7 +53,7 @@ const ConversationPage = ({ params }: Props) => {
     return null;
   }
 
-  // Type guard to check if conversation has otherMember property
+
   const hasOtherMember = (conv: any): conv is {
     isGroup: boolean;
     otherMember: { username?: string; imageUrl?: string }
@@ -61,7 +61,7 @@ const ConversationPage = ({ params }: Props) => {
     return !conv.isGroup && 'otherMember' in conv;
   };
 
-  // Get name and imageUrl safely
+  // Get name and imageUrl
   const getName = () => {
     if (conversation.isGroup) {
       return conversation.name || "";
@@ -80,19 +80,18 @@ const ConversationPage = ({ params }: Props) => {
     return undefined;
   };
 
-  // Handle successful friend removal or group action
+
   const handleSuccess = () => {
-    // Navigate away from this conversation
+
     router.push('/conversations');
   };
 
-  // Generate group options based on creator status
   const getGroupOptions = () => {
     if (!conversation.isGroup) return [];
 
     const options = [];
 
-    // Everyone can leave the group
+
     options.push({
       label: "Leave group",
       destructive: true,

@@ -23,7 +23,7 @@ const AddFriendDialog = ({ children }: AddFriendDialogProps) => {
   const createRequestByUsername = useMutation(api.request.createByUsername);
 
   const isEmail = (value: string) => {
-    // Basic email validation
+
     return /\S+@\S+\.\S+/.test(value);
   };
 
@@ -36,10 +36,10 @@ const AddFriendDialog = ({ children }: AddFriendDialogProps) => {
       setIsSubmitting(true);
 
       if (isEmail(inputValue)) {
-        // Send request by email
+
         await createRequestByEmail({ email: inputValue });
       } else {
-        // Send request by username
+
         await createRequestByUsername({ username: inputValue });
       }
 
