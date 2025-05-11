@@ -3,7 +3,7 @@ import { Card } from '@/components/ui/card';
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from '@/components/ui/dropdown-menu';
 import { cn } from '@/lib/utils';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
-import { ArrowLeft, Settings } from 'lucide-react';
+import { ArrowLeft, Settings, Users } from 'lucide-react';
 import Link from 'next/link';
 import React, { useEffect, useState } from 'react';
 import EmojiParser from '@/components/ui/emoji-parser';
@@ -14,6 +14,7 @@ import ProfileImagePopup from '@/components/ProfileImagePopup';
 type Props = {
     imageUrl?: string;
     name: string;
+    isGroup?: boolean;
     options?: {
         label: string;
         destructive: boolean;
@@ -21,7 +22,7 @@ type Props = {
     }[];
 }
 
-const Header = ({ imageUrl, name, options }: Props) => {
+const Header = ({ imageUrl, name, isGroup, options }: Props) => {
     const [finalImageUrl, setFinalImageUrl] = useState<string | undefined>(imageUrl);
     const [isProfileImageOpen, setIsProfileImageOpen] = useState(false);
     const getUrl = useMutation(api.files.getUrl);
@@ -58,9 +59,19 @@ const Header = ({ imageUrl, name, options }: Props) => {
                     <AvatarImage src={finalImageUrl} className="object-cover" />
                     <AvatarFallback>{name.substring(0, 1)}</AvatarFallback>
                 </Avatar>
-                <h2 className='font-semibold'>
-                    <EmojiParser text={name} />
-                </h2>
+                <div className="flex flex-col">
+                    <div className="flex items-center gap-2">
+                        <h2 className='font-semibold'>
+                            <EmojiParser text={name} />
+                        </h2>
+                        {isGroup && (
+                            <span className="text-xs bg-primary/10 text-primary px-2 py-0.5 rounded-full backdrop-blur-sm flex items-center gap-1">
+                                <Users className="h-3 w-3" />
+                                Group
+                            </span>
+                        )}
+                    </div>
+                </div>
             </div>
             <div className='flex gap-2'>
                 {options ? <DropdownMenu>

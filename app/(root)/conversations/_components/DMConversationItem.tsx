@@ -9,6 +9,7 @@ import { api } from '@/convex/_generated/api';
 import { useMutation, useQuery } from 'convex/react';
 import { cn } from '@/lib/utils';
 import { Badge } from '@/components/ui/badge';
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
 
 interface DMConversationItemProps {
     id: string;
@@ -29,6 +30,7 @@ const DMConversationItem = ({
     lastMessageContent,
     lastMessageSender,
     isGroup,
+    groupMembers = [],
     className,
     hasUnread = false
 }: DMConversationItemProps) => {
@@ -120,9 +122,19 @@ const DMConversationItem = ({
                             <EmojiParser text={username} />
                         </h4>
                         {isGroup && (
-                            <span className="text-xs bg-primary/10 text-primary px-2 py-0.5 rounded-full backdrop-blur-sm">
-                                Group
-                            </span>
+                            <TooltipProvider>
+                                <Tooltip>
+                                    <TooltipTrigger asChild>
+                                        <span className="text-xs bg-primary/10 text-primary px-2 py-0.5 rounded-full backdrop-blur-sm flex items-center gap-1">
+                                            <Users className="h-3 w-3" />
+                                            {groupMembers.length > 0 ? groupMembers.length : ''}
+                                        </span>
+                                    </TooltipTrigger>
+                                    <TooltipContent>
+                                        <p>{groupMembers.length} members in this group</p>
+                                    </TooltipContent>
+                                </Tooltip>
+                            </TooltipProvider>
                         )}
                         {hasUnread && (
                             <span className="text-xs bg-blue-500 text-white px-2 py-0.5 rounded-full ml-auto backdrop-blur-sm shadow-sm">

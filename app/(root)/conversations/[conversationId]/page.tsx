@@ -13,6 +13,7 @@ import RemoveFriendDialog from './_components/dialogs/RemoveFriendDialog';
 import DeleteGroupDialog from './_components/dialogs/DeleteGroupDialog';
 import LeaveGroupDialog from './_components/dialogs/LeaveGroupDialog';
 import ManageGroupDialog from './_components/dialogs/ManageGroupDialog';
+import GroupMembersDialog from './_components/dialogs/GroupMembersDialog';
 import { useRouter } from 'next/navigation';
 
 type Props = {
@@ -38,6 +39,7 @@ const ConversationPage = ({ params }: Props) => {
   const [deleteGroupDialogOpen, setDeleteGroupDialogOpen] = React.useState(false);
   const [leaveGroupDialogOpen, setLeaveGroupDialogOpen] = React.useState(false);
   const [manageGroupDialogOpen, setManageGroupDialogOpen] = React.useState(false);
+  const [membersDialogOpen, setMembersDialogOpen] = React.useState(false);
   const [callType, setCallType] = React.useState<"audio" | "video" | null>(null);
 
   if (conversation === undefined || isCreator === undefined) {
@@ -91,6 +93,12 @@ const ConversationPage = ({ params }: Props) => {
 
     const options = [];
 
+    // Add "View Members" option for all users
+    options.push({
+      label: "View Members",
+      destructive: false,
+      onClick: () => setMembersDialogOpen(true)
+    });
 
     options.push({
       label: "Leave group",
@@ -149,9 +157,18 @@ const ConversationPage = ({ params }: Props) => {
         />
       )}
 
+      {conversation.isGroup && (
+        <GroupMembersDialog
+          conversationId={conversationId}
+          open={membersDialogOpen}
+          setOpen={setMembersDialogOpen}
+        />
+      )}
+
       <Header
         name={getName()}
         imageUrl={getImageUrl()}
+        isGroup={conversation.isGroup}
         options={conversation.isGroup ? getGroupOptions() : [
           {
             label: "Remove friend",
