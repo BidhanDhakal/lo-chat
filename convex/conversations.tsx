@@ -314,25 +314,23 @@ export const leaveGroup = mutation({
                     .collect();
 
                 if (otherMembers.length === 0) {
-                    // If no other members, delete the group
+
                     await deleteGroupHandler(ctx, args);
                     return { success: true };
                 }
 
-                // Get the new owner's ID
                 const newOwnerId = otherMembers[0].memberId;
 
-                // Transfer ownership to the first other member by updating the conversation document
                 const conversation = await ctx.db.get(args.conversationId);
                 if (conversation) {
-                    // Create a new document with updated creatorId
+
                     await ctx.db.patch(args.conversationId, {
                         creatorId: newOwnerId
                     });
                 }
             }
 
-            // Remove the member
+
             await ctx.db.delete(membership._id);
 
             return { success: true };
@@ -343,9 +341,9 @@ export const leaveGroup = mutation({
     }
 });
 
-// Helper function to handle group deletion logic
+
 async function deleteGroupHandler(ctx: MutationCtx, args: { conversationId: Id<"conversations"> }) {
-    // Delete all members
+
     const members = await ctx.db
         .query("conversationMembers")
         .withIndex("by_conversationId", q => q.eq("conversationId", args.conversationId))
@@ -355,7 +353,7 @@ async function deleteGroupHandler(ctx: MutationCtx, args: { conversationId: Id<"
         await ctx.db.delete(member._id);
     }
 
-    // Delete all messages
+
     const messages = await ctx.db
         .query("messages")
         .withIndex("by_conversationId", q => q.eq("conversationId", args.conversationId))
@@ -365,13 +363,12 @@ async function deleteGroupHandler(ctx: MutationCtx, args: { conversationId: Id<"
         await ctx.db.delete(message._id);
     }
 
-    // Delete the conversation
     await ctx.db.delete(args.conversationId);
 
     return { success: true };
 }
 
-// Delete group - only the creator can delete the entire group
+
 export const deleteGroup = mutation({
     args: {
         conversationId: v.id("conversations"),
@@ -390,19 +387,19 @@ export const deleteGroup = mutation({
                 throw new ConvexError("User not found");
             }
 
-            // Get conversation
+
             const conversation = await ctx.db.get(args.conversationId);
 
             if (!conversation) {
                 throw new ConvexError("Conversation not found");
             }
 
-            // Check if it's a group
+
             if (!conversation.isGroup) {
                 throw new ConvexError("This is not a group conversation");
             }
 
-            // Check if current user is the creator
+
             if (conversation.creatorId?.toString() !== currentUser._id.toString()) {
                 throw new ConvexError("Only the group creator can delete the group");
             }
@@ -415,7 +412,7 @@ export const deleteGroup = mutation({
     }
 });
 
-// Check if user is group creator
+
 export const isGroupCreator = query({
     args: {
         conversationId: v.id("conversations"),
@@ -460,7 +457,7 @@ export const createGroupChat = mutation({
             throw new ConvexError("User not found");
         }
 
-        // Create the group conversation
+
         const conversationId = await ctx.db.insert("conversations", {
             isGroup: true,
             name: args.name,
@@ -468,13 +465,13 @@ export const createGroupChat = mutation({
             imageUrl: args.imageUrl,
         });
 
-        // Add the current user to the conversation
+
         await ctx.db.insert("conversationMembers", {
             conversationId,
             memberId: currentUser._id,
         });
 
-        // Add all selected members to the conversation
+
         for (const memberId of args.memberIds) {
             const member = await ctx.db.get(memberId as Id<"users">);
             if (member) {
@@ -489,7 +486,7 @@ export const createGroupChat = mutation({
     },
 });
 
-// Update group name - only the group creator can update the name
+
 export const updateGroupName = mutation({
     args: {
         conversationId: v.id("conversations"),
@@ -509,24 +506,23 @@ export const updateGroupName = mutation({
                 throw new ConvexError("User not found");
             }
 
-            // Get conversation
+
             const conversation = await ctx.db.get(args.conversationId);
 
             if (!conversation) {
                 throw new ConvexError("Conversation not found");
             }
 
-            // Check if it's a group
             if (!conversation.isGroup) {
                 throw new ConvexError("This is not a group conversation");
             }
 
-            // Check if current user is the creator
+
             if (conversation.creatorId?.toString() !== currentUser._id.toString()) {
                 throw new ConvexError("Only the group creator can update the group name");
             }
 
-            // Update group name
+
             await ctx.db.patch(args.conversationId, {
                 name: args.name
             });
@@ -539,7 +535,7 @@ export const updateGroupName = mutation({
     }
 });
 
-// Update group image - only the group creator can update the image
+
 export const updateGroupImage = mutation({
     args: {
         conversationId: v.id("conversations"),
@@ -559,24 +555,23 @@ export const updateGroupImage = mutation({
                 throw new ConvexError("User not found");
             }
 
-            // Get conversation
+
             const conversation = await ctx.db.get(args.conversationId);
 
             if (!conversation) {
                 throw new ConvexError("Conversation not found");
             }
 
-            // Check if it's a group
+
             if (!conversation.isGroup) {
                 throw new ConvexError("This is not a group conversation");
             }
 
-            // Check if current user is the creator
+
             if (conversation.creatorId?.toString() !== currentUser._id.toString()) {
                 throw new ConvexError("Only the group creator can update the group image");
             }
 
-            // Update group image
             await ctx.db.patch(args.conversationId, {
                 imageUrl: args.imageUrl
             });
@@ -589,7 +584,7 @@ export const updateGroupImage = mutation({
     }
 });
 
-// Add members to group - only the group creator can add members
+
 export const addGroupMembers = mutation({
     args: {
         conversationId: v.id("conversations"),
@@ -609,24 +604,23 @@ export const addGroupMembers = mutation({
                 throw new ConvexError("User not found");
             }
 
-            // Get conversation
+
             const conversation = await ctx.db.get(args.conversationId);
 
             if (!conversation) {
                 throw new ConvexError("Conversation not found");
             }
 
-            // Check if it's a group
+
             if (!conversation.isGroup) {
                 throw new ConvexError("This is not a group conversation");
             }
 
-            // Check if current user is the creator
+
             if (conversation.creatorId?.toString() !== currentUser._id.toString()) {
                 throw new ConvexError("Only the group creator can add members to the group");
             }
 
-            // Get existing members
             const existingMembers = await ctx.db
                 .query("conversationMembers")
                 .withIndex("by_conversationId", q => q.eq("conversationId", args.conversationId))
@@ -634,7 +628,7 @@ export const addGroupMembers = mutation({
 
             const existingMemberIds = existingMembers.map(member => member.memberId.toString());
 
-            // Add new members
+
             let addedCount = 0;
             for (const memberId of args.memberIds) {
                 const member = await ctx.db.get(memberId as Id<"users">);
@@ -655,7 +649,7 @@ export const addGroupMembers = mutation({
     }
 });
 
-// Remove a member from a group - only the group creator can remove other members
+
 export const removeGroupMember = mutation({
     args: {
         conversationId: v.id("conversations"),
@@ -675,24 +669,24 @@ export const removeGroupMember = mutation({
                 throw new ConvexError("User not found");
             }
 
-            // Get conversation
+
             const conversation = await ctx.db.get(args.conversationId);
 
             if (!conversation) {
                 throw new ConvexError("Conversation not found");
             }
 
-            // Check if it's a group
+
             if (!conversation.isGroup) {
                 throw new ConvexError("This is not a group conversation");
             }
 
-            // Check if current user is the creator
+
             if (conversation.creatorId?.toString() !== currentUser._id.toString()) {
                 throw new ConvexError("Only the group creator can remove members from the group");
             }
 
-            // Check if trying to remove creator (which is not allowed)
+
             const memberToRemove = await ctx.db.get(args.memberId as Id<"users">);
             if (!memberToRemove) {
                 throw new ConvexError("Member not found");
@@ -702,7 +696,7 @@ export const removeGroupMember = mutation({
                 throw new ConvexError("Cannot remove the group creator");
             }
 
-            // Find the membership to remove
+
             const membership = await ctx.db
                 .query("conversationMembers")
                 .withIndex("by_memberId_conversationId", q =>
@@ -714,7 +708,7 @@ export const removeGroupMember = mutation({
                 throw new ConvexError("This user is not a member of the group");
             }
 
-            // Remove the member by deleting their membership
+
             await ctx.db.delete(membership._id);
 
             return { success: true };
