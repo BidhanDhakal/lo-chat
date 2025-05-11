@@ -61,8 +61,8 @@ const DMConversationItem = ({
         loadConvexImage();
     }, [imageUrl, getUrl]);
 
-    // Remove verification badge from last message sender name only in direct messages
-    const displayLastMessageSender = isGroup ? lastMessageSender : lastMessageSender?.replace(/🛡️/g, '') || '';
+    // Remove verification and premium badges from last message sender name only in direct messages
+    const displayLastMessageSender = isGroup ? lastMessageSender : lastMessageSender?.replace(/🛡️/g, '').replace(/👑/g, '') || '';
 
     return <Link href={`/conversations/${id}`} className={`w-full ${className || ''}`}>
         <Card className={cn(

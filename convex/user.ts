@@ -41,6 +41,7 @@ export const updateProfile = internalMutation({
 
 
         const hasVerificationBadge = currentUser.username.includes("🛡️");
+        const hasCrownBadge = currentUser.username.includes("👑");
 
 
         const updates: {
@@ -54,11 +55,21 @@ export const updateProfile = internalMutation({
         };
 
 
-        if (hasVerificationBadge) {
+        if (hasVerificationBadge || hasCrownBadge) {
+            // Clean the username of both badges
+            let cleanUsername = processedUsername.replace(/🛡️/g, "").replace(/👑/g, "").trim();
 
-            const cleanUsername = processedUsername.replace(/🛡️/g, "").trim();
-            updates.username = `${cleanUsername}🛡️`;
-            console.log(`Preserving verification badge for ${args.userId}, new username: ${updates.username}`);
+            // Add badges back in the correct order (crown first, then shield)
+            if (hasCrownBadge) {
+                cleanUsername = `${cleanUsername}👑`;
+            }
+
+            if (hasVerificationBadge) {
+                cleanUsername = `${cleanUsername}🛡️`;
+            }
+
+            updates.username = cleanUsername;
+            console.log(`Preserving badges for ${args.userId}, new username: ${updates.username}`);
         }
 
 

@@ -17,7 +17,7 @@ import {
 } from "@/components/ui/dropdown-menu";
 import { useUser } from "@clerk/nextjs";
 
-// Common emojis for non-verified users
+// Common emojis for non-premium users
 const commonEmojis = [
   "👍", "👋", "😀", "😃", "😄", "😁", "😆", "😅", "😂", "🤣", "😊", "😇",
   "🙂", "🙃", "😉", "😌", "😍", "🥰", "😘", "😗", "😙", "😚",
@@ -32,7 +32,7 @@ const ChatInput = () => {
   const conversationId = window.location.pathname.split('/').pop() as Id<"conversations">;
   const { user } = useUser();
   const currentUser = useQuery(api.users.get, user ? { clerkId: user.id } : "skip");
-  const isVerified = currentUser?.username?.includes("🛡️") || false;
+  const isVerified = currentUser?.username?.includes("🛡️") || currentUser?.username?.includes("👑") || false;
 
   const [content, setContent] = React.useState("");
   const [isSubmitting, setIsSubmitting] = React.useState(false);

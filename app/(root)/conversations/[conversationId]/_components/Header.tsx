@@ -44,8 +44,8 @@ const Header = ({ imageUrl, name, options }: Props) => {
         loadConvexImage();
     }, [imageUrl, getUrl]);
 
-    // Filter out any shield emoji for display in popup
-    const displayName = name.replace(/🛡️/g, '');
+    // Filter out any shield or crown emojis for display in popup
+    const displayName = name.replace(/🛡️/g, '').replace(/👑/g, '');
 
     return (
         <Card className="w-full flex rounded-none border-0 md:border-b items-center justify-between p-0 md:p-2">

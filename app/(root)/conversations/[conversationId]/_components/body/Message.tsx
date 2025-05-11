@@ -33,8 +33,8 @@ const Message = ({
   isFirstInSequence = false,
   isNew = false
 }: MessageProps) => {
-  // Filter out the shield emoji from sender name for display purposes only
-  const displaySenderName = senderName.replace(/🛡️/g, '');
+  // Filter out both shield and crown emojis from sender name for display purposes only
+  const displaySenderName = senderName.replace(/🛡️/g, '').replace(/👑/g, '');
 
   const [imageUrl, setImageUrl] = useState<string | null>(null);
   const [isLoading, setIsLoading] = useState(false);
