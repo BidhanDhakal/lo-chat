@@ -3,7 +3,7 @@ import { mutation, query } from "./_generated/server";
 import { getUserByClerkId } from "./_utils";
 import { Id } from "./_generated/dataModel";
 
-// Define proper types for the request object
+
 type RequestWithSender = {
   _id: Id<"requests">;
   _creationTime: number;
@@ -73,7 +73,7 @@ export const create = mutation({
 
     if (!receiver) throw new ConvexError("User could not be found");
 
-    // Check if a request already exists from current user to receiver
+
     const requestAlreadySent = await ctx.db
       .query("requests")
       .withIndex("by_senderId_receiverId", (q) =>
@@ -82,7 +82,7 @@ export const create = mutation({
 
     if (requestAlreadySent) throw new ConvexError("Request already sent");
 
-    // Check if a request already exists from receiver to current user
+
     const requestAlreadyReceived = await ctx.db
       .query("requests")
       .withIndex("by_senderId_receiverId", (q) =>
@@ -93,7 +93,7 @@ export const create = mutation({
       throw new ConvexError("This user has already sent you a request");
     }
 
-    // Check if they are already friends (either direction)
+
     const existingFriendship1 = await ctx.db
       .query("friendships")
       .withIndex("by_userIds", (q) =>
@@ -110,7 +110,7 @@ export const create = mutation({
       throw new ConvexError("You are already friends with this user");
     }
 
-    // Create the request
+
     const request = await ctx.db.insert("requests", {
       senderId: currentUser._id,
       receiverId: receiver._id,
@@ -132,56 +132,56 @@ export const createByUsername = mutation({
 
     if (!args.username.trim()) throw new ConvexError("Username cannot be empty");
 
-    // Basic validation for username
+
     const usernameRegex = /^[a-zA-Z0-9_.-]+$/;
     if (!usernameRegex.test(args.username)) {
       throw new ConvexError("Username can only contain letters, numbers, underscores, periods, and hyphens");
     }
 
-    // Function to get clean username without emojis
+
     const getCleanUsername = (text: string) => {
-      // Special case for shield emoji which might have different encodings
+
       let result = text;
 
-      // Handle the shield emoji specifically since it might be encoded differently
-      result = result.replace(/🛡️/gu, ''); // With variation selector
-      result = result.replace(/🛡/gu, '');  // Without variation selector
 
-      // Then remove any other emojis
+      result = result.replace(/🛡️/gu, '');
+      result = result.replace(/🛡/gu, '');
+
+
       result = result.replace(/[\u{1F600}-\u{1F6FF}]|[\u{2600}-\u{26FF}]|[\u{2700}-\u{27BF}]|[\u{1F900}-\u{1F9FF}]|[\u{1F300}-\u{1F5FF}]|[\u{1F680}-\u{1F6FF}]|[\u{1F1E0}-\u{1F1FF}]/gu, '');
 
-      return result.trim().toLowerCase(); // Convert to lowercase for case-insensitive matching
+      return result.trim().toLowerCase();
     };
 
-    // Normalize the input username to lowercase for comparison
+
     const normalizedInputUsername = args.username.toLowerCase();
 
-    // Check if trying to add yourself with or without emojis
+
     const cleanCurrentUsername = getCleanUsername(currentUser.username);
     if (currentUser.username.toLowerCase() === normalizedInputUsername || cleanCurrentUsername === normalizedInputUsername) {
       throw new ConvexError("Can't send a request to yourself");
     }
 
-    // First try case-insensitive match using lowercase comparisons
+
     let receiver = null;
 
-    // Get all users to handle case-insensitive matching
+
     const allUsers = await ctx.db.query("users").collect();
 
-    // Find users with matching username (case-insensitive)
+
     const foundUser = allUsers.find(user => {
-      // Direct match (case-insensitive)
+
       if (user.username.toLowerCase() === normalizedInputUsername) {
         return true;
       }
 
-      // Special case for username that ends with shield emoji (case-insensitive)
+
       if (user.username.toLowerCase() === normalizedInputUsername + "🛡️" ||
         user.username.toLowerCase() === normalizedInputUsername + "🛡") {
         return true;
       }
 
-      // Match cleaned username without emojis (case-insensitive)
+
       const cleanUsername = getCleanUsername(user.username);
       return cleanUsername === normalizedInputUsername;
     });
@@ -192,7 +192,7 @@ export const createByUsername = mutation({
 
     if (!receiver) throw new ConvexError("User with this username could not be found");
 
-    // Check if a request already exists from current user to receiver
+
     const requestAlreadySent = await ctx.db
       .query("requests")
       .withIndex("by_senderId_receiverId", (q) =>
@@ -201,7 +201,7 @@ export const createByUsername = mutation({
 
     if (requestAlreadySent) throw new ConvexError("Request already sent");
 
-    // Check if a request already exists from receiver to current user
+
     const requestAlreadyReceived = await ctx.db
       .query("requests")
       .withIndex("by_senderId_receiverId", (q) =>
@@ -212,7 +212,7 @@ export const createByUsername = mutation({
       throw new ConvexError("This user has already sent you a request");
     }
 
-    // Check if they are already friends (either direction)
+
     const existingFriendship1 = await ctx.db
       .query("friendships")
       .withIndex("by_userIds", (q) =>
@@ -229,7 +229,7 @@ export const createByUsername = mutation({
       throw new ConvexError("You are already friends with this user");
     }
 
-    // Create the request
+
     const request = await ctx.db.insert("requests", {
       senderId: currentUser._id,
       receiverId: receiver._id,
@@ -277,14 +277,14 @@ export const accept = mutation({
       isGroup: false,
     });
 
-    // Create the friendship
+
     await ctx.db.insert("friendships", {
       userId1: currentUser._id,
       userId2: request.senderId,
       status: "accepted"
     });
 
-    // Add both users to the conversation
+
     await ctx.db.insert("conversationMembers", {
       memberId: currentUser._id,
       conversationId
@@ -295,7 +295,7 @@ export const accept = mutation({
       conversationId
     });
 
-    // Delete the request
+
     await ctx.db.delete(request._id);
 
     return { success: true };
