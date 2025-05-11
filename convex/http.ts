@@ -35,12 +35,12 @@ const handleClerkWebhook = httpAction(async (ctx, req) => {
         case "user.updated": {
             console.log(`${event.type} event received for user ${event.data.id}`);
 
-            // Find existing user
+
             const existingUser = await ctx.runQuery(internal.user.get, {
                 clerkId: event.data.id
             });
 
-            // Get profile data from Clerk
+
             const email = event.data.email_addresses?.[0]?.email_address || "";
             const imageUrl = event.data.image_url || "";
             const firstName = event.data.first_name || "";
@@ -48,12 +48,12 @@ const handleClerkWebhook = httpAction(async (ctx, req) => {
             const username = `${firstName} ${lastName}`.trim() || event.data.username || "User";
 
             if (existingUser) {
-                // Log the update operation
+
                 console.log(`Updating existing user ${event.data.id} in database`);
                 console.log(`- New image URL: ${imageUrl}`);
                 console.log(`- New username: ${username}`);
 
-                // Update existing user with new data from Clerk
+
                 await ctx.runMutation(internal.user.updateProfile, {
                     userId: existingUser._id,
                     username: username,
@@ -61,7 +61,7 @@ const handleClerkWebhook = httpAction(async (ctx, req) => {
                     email: email
                 });
             } else {
-                // Create new user
+
                 console.log(`Creating new user ${event.data.id} in database`);
 
                 await ctx.runMutation(internal.user.crate, {
