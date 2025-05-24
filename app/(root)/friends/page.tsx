@@ -42,7 +42,7 @@ const FriendsPage = () => {
         <AddFriendDialog>
           <Button size="sm" variant="ghost">
             <UserPlus className="h-5 w-5 mr-2" />
-            Add Friend
+            Add Friends
           </Button>
         </AddFriendDialog>
       </div>
